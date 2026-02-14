@@ -1,38 +1,65 @@
-# Personal AI Running Coach
+# Personal AI Trainer
 
 ## Vision
-To build an intelligent, adaptive running coach that leverages diverse data sources to optimize marathon training. By integrating **Strava** (performance data) and **WHOOP** (physiological recovery data), the AI Coach dynamically adjusts daily training recommendations. It balances training load with recovery capacity, ensuring athletes train smarter, reduce injury risk, and peak at the right time.
+To build an intelligent, holistic **AI Personal Trainer** that helps you achieve your fitness goals by adapting to your life. Unlike a static plan or a simple running coach, this trainer understands your entire week—from Strength training to Cardio and Recovery. By integrating **Strava** (runs/activities) and **WHOOP** (sleep, recovery, non-running workouts), it dynamically generates detailed workout routines for your scheduled blocks, ensuring you train smarter, not just harder.
 
-## Current Progress
+## Key Features
 
-### Backend Infrastructure
-- **FastAPI** application structure with SQLite database.
-- **SQLAlchemy** ORM models for Users, Activities, Recoveries, and Training Plans.
-- **Authentication**: OAuth2 implementation for both Strava and WHOOP APIs.
+### 1. Holistic Goal Tracking
+- **Short-term & Long-term Goals**: Define what you want to achieve (e.g., "Improve 5k time", "Increase Bench Press"). The AI considers these goals when planning every workout.
 
-### Data Integration
-- **Strava Integration**: Syncs run activities including distance, moving time, elevation, and heart rate data.
-- **WHOOP Integration**: Syncs daily recovery scores, HRV, resting heart rate, and sleep performance. Auto-refreshes tokens and handles API errors gracefully.
-- **Seeding Tools**: Development scripts (`backend/seed_recoveries.py`) to populate the database with mock physiological data for testing logic without live API limits.
+### 2. Weekly Scheduling
+- **Flexible Blocking**: "Block out" your week in advance with high-level types (Strength, Cardio, Recovery, etc.) and durations.
+- **Life-First Design**: The trainer fills in the details *for* you based on these blocks, respecting your time constraints.
+- **Endpoints**:
+    - `POST /schedule/init`: Automatically generates a default weekly structure.
+    - `PUT /schedule/{id}`: Modify blocks to fit your changing schedule.
 
-### AI Coach Engine
-- **Context Awareness**: Aggregates the last 28 days of training load and 7 days of recovery trends to inform decision-making.
-- **Plan Generation**: Uses **GPT-4o** to generate structured, 7-day training schedules in JSON format.
-- **Logic**: Applies elite coaching principles—reducing intensity when recovery is low (<33%) and capitalizing on high-recovery days (>66%).
+### 3. Smart Data Integration
+- **Strava**: Syncs your runs, paces, and heart rate data.
+- **WHOOP**: 
+    - **Recovery**: Daily recovery scores, HRV, and sleep performance influence workout intensity.
+    - **Workouts**: Syncs strength, functional fitness, and other non-running activities to give the AI a complete picture of your strain.
 
-## Next Steps
+### 4. AI-Powered Planning (Next 3 Days)
+- **Context-Aware Coaching**: The AI looks at your:
+    - **Goals**
+    - **Schedule** (What available time do I have?)
+    - **Recent Load** (What have I done lately?)
+    - **Recovery** (How ready am I to perform?)
+- **Detailed Routines**: It generates specific instructions for your next 3 days. 
+    - *Example*: If you have a "Strength" block and low recovery, it might suggest a "Low-Intensity Technical Session" instead of a "Max Effort Power Day".
 
-### 1. Frontend Interface
-- Build a web dashboard (React/Next.js) for users to:
-  - View their current training plan.
-  - See visualization of Training Load vs. Recovery.
-  - Manually trigger data syncs.
+## Getting Started
 
-### 2. Automation & Scheduling
-- Implement background tasks (e.g., Celery) to automatically sync data and regenerate daily advice every morning.
-- Send push notifications or emails with the day's workout.
+### Prerequisites
+- Python 3.9+
+- `uvicorn` and `fastapi`
+- `.env` file with API keys for Strava, WHOOP, and OpenAI.
 
-### 3. Advanced AI Features
-- **Long-term Periodization**: Extend planning horizon beyond 7 days to manage macro-cycles (base, build, taper).
-- **Metric Analytics**: Calculate Acute-to-Chronic Workload Ratio (ACWR) to better predict injury risk.
-- **Feedback Loop**: Allow users to rate completed workouts ("Too hard", "Too easy") to fine-tune future intensity.
+### Running the App
+1.  **Start the Server**:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
+2.  **Access the API Docs**:
+    Go to `http://localhost:8000/docs` to interact with the endpoints.
+
+### Testing the "Personal Trainer" Flow
+We have included a comprehensive test script to demonstrate the full loop:
+1.  **Ensure Server is STOPPED** (to avoid database locks).
+2.  Run the test script:
+    ```bash
+    python3 backend/test_personal_trainer_flow.py
+    ```
+    This script will:
+    - Create a sample User and Goal (if missing).
+    - Ensure your next 3 days have Workout Blocks.
+    - Call the AI Coach to generate a detailed plan.
+    - Print the JSON plan to the console.
+
+## Project Structure
+- `backend/app/models.py`: Database schemas (User, Goal, WorkoutBlock, WhoopWorkout, etc.).
+- `backend/app/services/ai_coach.py`: The brain. Aggregates data and prompts GPT-4o.
+- `backend/app/routers/schedule.py`: Manages the weekly blocking logic.
+- `backend/app/services/whoop_client.py`: Handles OAuth and data syncing (Recovery, Sleep, Workouts).

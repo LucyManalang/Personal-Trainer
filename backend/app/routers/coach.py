@@ -6,6 +6,8 @@ from ..database import get_db
 from ..services import ai_coach
 from ..models import User
 
+from .auth import get_current_user
+
 router = APIRouter()
 
 @router.post("/generate")
@@ -18,4 +20,12 @@ def generate_plan(plan_request: TrainingPlanCreate, db: Session = Depends(get_db
         pass 
         
     plan = ai_coach.generate_training_plan(user, plan_request, db)
+    return plan
+
+@router.post("/plan-3-day")
+def generate_3_day_plan(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    plan = ai_coach.generate_3_day_plan(current_user, db)
     return plan

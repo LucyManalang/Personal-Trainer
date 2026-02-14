@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/lucymanalang/Code/Projects/Personal-Trainer/backend/test_personal_trainer_flow.py", line 7, in <module>
+    from app.services.ai_coach import generate_3_day_plan
+  File "/Users/lucymanalang/Code/Projects/Personal-Trainer/backend/app/services/ai_coach.py", line 9, in <module>
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+  File "/Users/lucymanalang/Library/Python/3.9/lib/python/site-packages/openai/_client.py", line 137, in __init__
+    raise OpenAIError(
+openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable

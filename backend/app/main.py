@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth, data, coach
+from .routers import auth, data, coach, schedule
 from .database import engine, Base
 
 # Create database tables
@@ -20,6 +20,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(data.router, prefix="/data", tags=["Data"])
 app.include_router(coach.router, prefix="/coach", tags=["Coach"])
+app.include_router(schedule.router, prefix="/schedule", tags=["Schedule"])
 
 @app.get("/")
 def read_root():

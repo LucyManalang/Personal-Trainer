@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, Text, JSON
+from datetime import datetime
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -21,6 +22,9 @@ class User(Base):
     activities = relationship("StravaActivity", back_populates="user")
     recoveries = relationship("WhoopRecovery", back_populates="user")
     training_plans = relationship("TrainingPlan", back_populates="user")
+    goals = relationship("Goal", back_populates="user")
+    workout_blocks = relationship("WorkoutBlock", back_populates="user")
+    whoop_workouts = relationship("WhoopWorkout", back_populates="user")
 
 class StravaActivity(Base):
     __tablename__ = "strava_activities"
@@ -64,3 +68,46 @@ class TrainingPlan(Base):
     feedback = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="training_plans")
+
+class Goal(Base):
+    __tablename__ = "goals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    description = Column(String)
+    type = Column(String) # 'short_term' or 'long_term'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default="active") # active, completed, abandoned
+
+    user = relationship("User", back_populates="goals")
+
+class WorkoutBlock(Base):
+    __tablename__ = "workout_blocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(String) # YYYY-MM-DD
+    type = Column(String) # Strength, Cardio, Recovery, etc.
+    planned_duration_minutes = Column(Integer)
+    notes = Column(Text, nullable=True)
+    is_completed = Column(Boolean, default=False)
+    
+    user = relationship("User", back_populates="workout_blocks")
+
+class WhoopWorkout(Base):
+    __tablename__ = "whoop_workouts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    whoop_id = Column(String, unique=True, index=True)
+    sport_name = Column(String)
+    start = Column(DateTime)
+    end = Column(DateTime)
+    timezone_offset = Column(String, nullable=True)
+    strain = Column(Float)
+    average_heart_rate = Column(Integer)
+    max_heart_rate = Column(Integer)
+    kilojoules = Column(Float)
+    zone_durations = Column(JSON, nullable=True)
+    
+    user = relationship("User", back_populates="whoop_workouts")

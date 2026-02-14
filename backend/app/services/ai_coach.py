@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from ..models import User, StravaActivity, WhoopRecovery, TrainingPlan
+from ..models import User, StravaActivity, WhoopRecovery, TrainingPlan, Goal, WorkoutBlock, WhoopWorkout
 from ..schemas import TrainingPlanCreate
 import os
 import json
@@ -9,14 +9,13 @@ from openai import OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_context(user: User, db: Session):
-    # 1. Fetch recent activities (last 28 days for load)
+    # 1. Activities (Strava) - Last 28 days
     cutoff_date = datetime.now() - timedelta(days=28)
     activities = db.query(StravaActivity).filter(
         StravaActivity.user_id == user.id,
         StravaActivity.start_date >= cutoff_date
     ).all()
     
-    # Summarize activity data
     activity_summary = []
     for act in activities:
         activity_summary.append({
@@ -26,7 +25,7 @@ def get_context(user: User, db: Session):
             "suffer_score": act.suffer_score
         })
 
-    # 2. Fetch recent recovery (last 7 days)
+    # 2. Recovery (WHOOP) - Last 7 days
     recovery_cutoff = datetime.now() - timedelta(days=7)
     recoveries = db.query(WhoopRecovery).filter(
         WhoopRecovery.user_id == user.id,
@@ -39,98 +38,150 @@ def get_context(user: User, db: Session):
             "date": rec.date,
             "recovery_score": rec.recovery_score,
             "hrv": rec.hrv,
-            "resting_hr": rec.resting_heart_rate
+            "resting_hr": rec.resting_heart_rate,
+            "sleep_performance": rec.sleep_performance
         })
+
+    # 3. Workouts (WHOOP) - Last 14 days
+    workout_cutoff = datetime.now() - timedelta(days=14)
+    whoop_workouts = db.query(WhoopWorkout).filter(
+        WhoopWorkout.user_id == user.id,
+        WhoopWorkout.start >= workout_cutoff
+    ).all()
+    
+    whoop_workout_summary = []
+    for ww in whoop_workouts:
+        whoop_workout_summary.append({
+            "date": ww.start.strftime("%Y-%m-%d"),
+            "sport": ww.sport_name,
+            "strain": ww.strain,
+            "avg_hr": ww.average_heart_rate,
+            "max_hr": ww.max_heart_rate,
+            "kilojoules": ww.kilojoules
+        })
+        
+    # 4. Goals
+    goals = db.query(Goal).filter(
+        Goal.user_id == user.id,
+        Goal.status == "active"
+    ).all()
+    goal_summary = [{"type": g.type, "description": g.description} for g in goals]
         
     return {
         "activities": activity_summary,
-        "recoveries": recovery_summary
+        "recoveries": recovery_summary,
+        "whoop_workouts": whoop_workout_summary,
+        "goals": goal_summary
     }
 
-def generate_training_plan(user: User, request_data: TrainingPlanCreate, db: Session):
+def generate_3_day_plan(user: User, db: Session):
     context = get_context(user, db)
+    
+    # Get next 3 days of workout blocks
+    today = datetime.now().date()
+    end_date = today + timedelta(days=3) # Today, T+1, T+2
+    
+    blocks = db.query(WorkoutBlock).filter(
+        WorkoutBlock.user_id == user.id,
+        WorkoutBlock.date >= today.strftime("%Y-%m-%d"),
+        WorkoutBlock.date < end_date.strftime("%Y-%m-%d")
+    ).order_by(WorkoutBlock.date).all()
+    
+    if not blocks:
+         return {"message": "No workout blocks found for the next 3 days. Please initialize your schedule first."}
+         
+    blocks_context = []
+    for b in blocks:
+        blocks_context.append({
+            "date": b.date,
+            "type": b.type,
+            "duration": b.planned_duration_minutes,
+            "notes": b.notes
+        })
     
     # Prompt Construction
     system_prompt = """
-    You are an expert elite running coach. Your goal is to create a personalized 7-day training plan for an athlete training for a marathon.
-    Use the provided physiological data (WHOOP) and training history (Strava) to adapt the plan.
+    You are an expert Personal Trainer AI. Your client has a pre-defined schedule of workout blocks (Type + Duration).
+    Your job is to fill in the specific details for these blocks for the next 3 days.
     
-    Principles:
-    - If recovery is low (<33%), prescribe rest or active recovery.
-    - If recovery is high (>66%) and recent load is manageable, suggest key workouts (intervals, tempo, long run).
-    - Respect the athlete's specific requests constraints.
+    Inputs:
+    1. Goals: The client's short and long term goals.
+    2. Context: Recent Strava runs, WHOOP recoveries (Sleep/HRV), and WHOOP workouts (Strength/Cardio).
+    3. Schedule: The specific blocks you must detail.
+    
+    Instructions:
+    - Respect the Block Type and Duration strictly.
+    - Provide a specific "Routine" or "Workout" valid for that type.
+    - If type is "Strength", specify exercises/sets/reps or focus area.
+    - If type is "Cardio" or "Run", specify pace, intervals, or steady state based on recovery.
+    - Be holistic. If recovery is low, adjust intensity but keep duration if possible, or advise modification.
     
     Output Format:
-    Return strictly Valid JSON. The JSON should be an array of objects, each representing a day.
+    Return strictly Valid JSON. An object with a key "plan" containing an array of 3 objects (one for each day).
     Example:
-    [
-        {"date": "YYYY-MM-DD", "type": "Run", "focus": "Easy", "description": "Run 5km easy", "distance_km": 5},
-        {"date": "YYYY-MM-DD", "type": "Rest", "focus": "Recovery", "description": "Rest day", "distance_km": 0}
-    ]
+    {
+      "plan": [
+        {
+          "date": "YYYY-MM-DD",
+          "block_type": "Strength",
+          "focus": "Upper Body Power",
+          "routine": "3x5 Bench Press, 3x8 Pullups...",
+          "intensity": "High",
+          "notes": "Focus on explosive tempo."
+        }
+      ]
+    }
     """
     
     user_prompt = f"""
-    App Current Date: {datetime.now().strftime("%Y-%m-%d")}
-    Plan Start Date: {request_data.start_date}
-    Plan End Date: {request_data.end_date}
+    Current Date: {today}
     
-    User Feedback/Request: "{request_data.feedback or 'None'}"
+    Client Goals:
+    {json.dumps(context['goals'], indent=2)}
     
-    Recent Training History (Last 28 days):
-    {json.dumps(context['activities'], indent=2)}
+    Upcoming Schedule (Blocks to Detail):
+    {json.dumps(blocks_context, indent=2)}
     
-    Recent Recovery Data (Last 7 days):
-    {json.dumps(context['recoveries'], indent=2)}
+    Recent Physiology (Recovery/Sleep):
+    {json.dumps(context['recoveries'][-3:], indent=2)} 
     
-    Generate the plan for the requested dates.
+    Recent Workouts (WHOOP):
+    {json.dumps(context['whoop_workouts'][-5:], indent=2)}
+    
+    Recent Runs (Strava):
+    {json.dumps(context['activities'][-5:], indent=2)}
+    
+    Generate the detailed plan for these 3 days.
     """
     
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini", # Cost-effective: ~$0.15 / 1M tokens vs ~$2.50 for gpt-4o
+            model="gpt-4o", 
             messages=[
-                {"role": "system", "content": system_prompt + "\nReturn a JSON object with a key 'plan' containing the list of days."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             response_format={"type": "json_object"}
         )
         
         content = completion.choices[0].message.content
-        plan_json = json.loads(content)
+        plan_data = json.loads(content)
         
-        # Save plan to DB
-        # Check if plan format is wrapped in a key or is the array directly. 
-        # The prompt asked for array. But response_format json_object usually requires a root object.
-        # Let's start lenient.
+        # Save plan to DB? 
+        # The user didn't ask to save it as a "TrainingPlan" object specifically, but implied it's the trainer giving info.
+        # Let's save it as a TrainingPlan for history.
+        new_plan = TrainingPlan(
+            user_id=user.id,
+            start_date=today.strftime("%Y-%m-%d"),
+            end_date=(today + timedelta(days=2)).strftime("%Y-%m-%d"),
+            content=plan_data,
+            feedback="Auto-generated 3-day plan"
+        )
+        db.add(new_plan)
+        db.commit()
         
-        # Usually model with json_object mode puts it in a key if instructed, or we might need to adjust prompt.
-        # Let's adjust prompt to "Return JSON object with key 'plan' containing the array".
-        pass 
+        return plan_data
+        
     except Exception as e:
         print(f"Error calling OpenAI: {e}")
         return {"error": str(e)}
-
-    # Refined prompt for JSON object structure to be safe
-    completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt + "\nReturn a JSON object with a key 'plan' containing the list of days."},
-            {"role": "user", "content": user_prompt}
-        ],
-        response_format={"type": "json_object"}
-    )
-    content = completion.choices[0].message.content
-    plan_data = json.loads(content)
-    
-    # Store in DB
-    new_plan = TrainingPlan(
-        user_id=user.id,
-        start_date=request_data.start_date,
-        end_date=request_data.end_date,
-        content=plan_data,
-        feedback=request_data.feedback
-    )
-    db.add(new_plan)
-    db.commit()
-    
-    return plan_data

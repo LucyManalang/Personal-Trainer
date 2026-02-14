@@ -11,10 +11,17 @@ load_dotenv()
 
 router = APIRouter()
 
-STRAVA_CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
-STRAVA_CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
 WHOOP_CLIENT_ID = os.getenv("WHOOP_CLIENT_ID")
 WHOOP_CLIENT_SECRET = os.getenv("WHOOP_CLIENT_SECRET")
+
+def get_current_user(db: Session = Depends(get_db)):
+    # Simple auth: return the first user in the DB.
+    # In a real app, this would validate a header/token.
+    user = db.query(User).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="No authenticated user found")
+    return user
+
 
 # Strava
 @router.get("/strava/login")
@@ -75,7 +82,7 @@ def strava_callback(code: str, db: Session = Depends(get_db)):
 @router.get("/whoop/login")
 def whoop_login():
     redirect_uri = "http://localhost:8000/auth/whoop/callback"
-    scope = "read:recovery read:sleep"
+    scope = "read:recovery read:cycles read:workout read:sleep read:profile offline"
     # Generate a random state string (must be at least 8 chars)
     import secrets
     state = secrets.token_urlsafe(16)

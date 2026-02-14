@@ -68,3 +68,58 @@ class TrainingPlan(TrainingPlanBase):
     user_id: int
     class Config:
         from_attributes = True
+
+# Goal Schemas
+class GoalBase(BaseModel):
+    description: str
+    type: str # 'short_term' or 'long_term'
+    status: Optional[str] = "active"
+
+class GoalCreate(GoalBase):
+    pass
+
+class Goal(GoalBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+# Workout Block Schemas
+class WorkoutBlockBase(BaseModel):
+    date: str # YYYY-MM-DD
+    type: str
+    planned_duration_minutes: int
+    notes: Optional[str] = None
+    is_completed: Optional[bool] = False
+
+class WorkoutBlockCreate(WorkoutBlockBase):
+    pass
+
+class WorkoutBlock(WorkoutBlockBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
+
+# Whoop Workout Schemas
+class WhoopWorkoutBase(BaseModel):
+    whoop_id: str
+    sport_name: str
+    start: datetime
+    end: datetime
+    timezone_offset: Optional[str] = None
+    strain: float
+    average_heart_rate: int
+    max_heart_rate: int
+    kilojoules: float
+    zone_durations: Optional[Any] = None
+
+class WhoopWorkoutCreate(WhoopWorkoutBase):
+    pass
+
+class WhoopWorkout(WhoopWorkoutBase):
+    id: int
+    user_id: int
+    class Config:
+        from_attributes = True
