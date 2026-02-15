@@ -9,179 +9,331 @@ from openai import OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_context(user: User, db: Session):
-    # 1. Activities (Strava) - Last 28 days
-    cutoff_date = datetime.now() - timedelta(days=28)
-    activities = db.query(StravaActivity).filter(
-        StravaActivity.user_id == user.id,
-        StravaActivity.start_date >= cutoff_date
-    ).all()
-    
-    activity_summary = []
-    for act in activities:
-        activity_summary.append({
-            "date": act.start_date.strftime("%Y-%m-%d"),
-            "type": act.type,
-            "distance_km": round(act.distance / 1000, 2),
-            "suffer_score": act.suffer_score
-        })
-
-    # 2. Recovery (WHOOP) - Last 7 days
-    recovery_cutoff = datetime.now() - timedelta(days=7)
-    recoveries = db.query(WhoopRecovery).filter(
-        WhoopRecovery.user_id == user.id,
-        WhoopRecovery.date >= recovery_cutoff.strftime("%Y-%m-%d")
-    ).all()
-    
-    recovery_summary = []
-    for rec in recoveries:
-        recovery_summary.append({
-            "date": rec.date,
-            "recovery_score": rec.recovery_score,
-            "hrv": rec.hrv,
-            "resting_hr": rec.resting_heart_rate,
-            "sleep_performance": rec.sleep_performance
-        })
-
-    # 3. Workouts (WHOOP) - Last 14 days
-    workout_cutoff = datetime.now() - timedelta(days=14)
-    whoop_workouts = db.query(WhoopWorkout).filter(
-        WhoopWorkout.user_id == user.id,
-        WhoopWorkout.start >= workout_cutoff
-    ).all()
-    
-    whoop_workout_summary = []
-    for ww in whoop_workouts:
-        whoop_workout_summary.append({
-            "date": ww.start.strftime("%Y-%m-%d"),
-            "sport": ww.sport_name,
-            "strain": ww.strain,
-            "avg_hr": ww.average_heart_rate,
-            "max_hr": ww.max_heart_rate,
-            "kilojoules": ww.kilojoules
-        })
-        
-    # 4. Goals
-    goals = db.query(Goal).filter(
-        Goal.user_id == user.id,
-        Goal.status == "active"
-    ).all()
-    goal_summary = [{"type": g.type, "description": g.description} for g in goals]
-        
-    return {
-        "activities": activity_summary,
-        "recoveries": recovery_summary,
-        "whoop_workouts": whoop_workout_summary,
-        "goals": goal_summary
-    }
-
-def generate_3_day_plan(user: User, db: Session):
-    context = get_context(user, db)
-    
-    # Get next 3 days of workout blocks
-    today = datetime.now().date()
-    end_date = today + timedelta(days=3) # Today, T+1, T+2
-    
-    blocks = db.query(WorkoutBlock).filter(
-        WorkoutBlock.user_id == user.id,
-        WorkoutBlock.date >= today.strftime("%Y-%m-%d"),
-        WorkoutBlock.date < end_date.strftime("%Y-%m-%d")
-    ).order_by(WorkoutBlock.date).all()
-    
-    if not blocks:
-         return {"message": "No workout blocks found for the next 3 days. Please initialize your schedule first."}
-         
-    blocks_context = []
-    for b in blocks:
-        blocks_context.append({
-            "date": b.date,
-            "type": b.type,
-            "duration": b.planned_duration_minutes,
-            "notes": b.notes
-        })
-    
-    # Prompt Construction
-    system_prompt = """
-    You are an expert Personal Trainer AI. Your client has a pre-defined schedule of workout blocks (Type + Duration).
-    Your job is to fill in the specific details for these blocks for the next 3 days.
-    
-    Inputs:
-    1. Goals: The client's short and long term goals.
-    2. Context: Recent Strava runs, WHOOP recoveries (Sleep/HRV), and WHOOP workouts (Strength/Cardio).
-    3. Schedule: The specific blocks you must detail.
-    
-    Instructions:
-    - Respect the Block Type and Duration strictly.
-    - Provide a specific "Routine" or "Workout" valid for that type.
-    - If type is "Strength", specify exercises/sets/reps or focus area.
-    - If type is "Cardio" or "Run", specify pace, intervals, or steady state based on recovery.
-    - Be holistic. If recovery is low, adjust intensity but keep duration if possible, or advise modification.
-    
-    Output Format:
-    Return strictly Valid JSON. An object with a key "plan" containing an array of 3 objects (one for each day).
-    Example:
-    {
-      "plan": [
-        {
-          "date": "YYYY-MM-DD",
-          "block_type": "Strength",
-          "focus": "Upper Body Power",
-          "routine": "3x5 Bench Press, 3x8 Pullups...",
-          "intensity": "High",
-          "notes": "Focus on explosive tempo."
-        }
-      ]
-    }
-    """
-    
-    user_prompt = f"""
-    Current Date: {today}
-    
-    Client Goals:
-    {json.dumps(context['goals'], indent=2)}
-    
-    Upcoming Schedule (Blocks to Detail):
-    {json.dumps(blocks_context, indent=2)}
-    
-    Recent Physiology (Recovery/Sleep):
-    {json.dumps(context['recoveries'][-3:], indent=2)} 
-    
-    Recent Workouts (WHOOP):
-    {json.dumps(context['whoop_workouts'][-5:], indent=2)}
-    
-    Recent Runs (Strava):
-    {json.dumps(context['activities'][-5:], indent=2)}
-    
-    Generate the detailed plan for these 3 days.
-    """
-    
     try:
-        completion = client.chat.completions.create(
-            model="gpt-4o", 
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={"type": "json_object"}
-        )
+        # 1. Activities (Strava) - Last 28 days
+        cutoff_date = datetime.now() - timedelta(days=28)
+        activities = db.query(StravaActivity).filter(
+            StravaActivity.user_id == user.id,
+            StravaActivity.start_date >= cutoff_date
+        ).all()
         
-        content = completion.choices[0].message.content
-        plan_data = json.loads(content)
+        activity_summary = []
+        for act in activities:
+            activity_summary.append({
+                "date": act.start_date.strftime("%Y-%m-%d"),
+                "type": act.type,
+                "distance": f"{round(act.distance / 1609.34, 2)} mi" if user.settings.get('units', 'imperial') == 'imperial' else f"{round(act.distance / 1000, 2)} km",
+                "suffer_score": act.suffer_score
+            })
+
+        # 2. Recovery (WHOOP) - Last 7 days
+        recovery_cutoff = datetime.now() - timedelta(days=7)
+        recoveries = db.query(WhoopRecovery).filter(
+            WhoopRecovery.user_id == user.id,
+            WhoopRecovery.date >= recovery_cutoff.strftime("%Y-%m-%d")
+        ).all()
         
-        # Save plan to DB? 
-        # The user didn't ask to save it as a "TrainingPlan" object specifically, but implied it's the trainer giving info.
-        # Let's save it as a TrainingPlan for history.
-        new_plan = TrainingPlan(
-            user_id=user.id,
-            start_date=today.strftime("%Y-%m-%d"),
-            end_date=(today + timedelta(days=2)).strftime("%Y-%m-%d"),
-            content=plan_data,
-            feedback="Auto-generated 3-day plan"
-        )
-        db.add(new_plan)
+        recovery_summary = []
+        for rec in recoveries:
+            recovery_summary.append({
+                "date": rec.date,
+                "recovery_score": rec.recovery_score,
+                "hrv": rec.hrv,
+                "resting_hr": rec.resting_heart_rate,
+                "sleep_performance": rec.sleep_performance
+            })
+
+        # 3. Workouts (WHOOP) - Last 14 days
+        workout_cutoff = datetime.now() - timedelta(days=14)
+        whoop_workouts = db.query(WhoopWorkout).filter(
+            WhoopWorkout.user_id == user.id,
+            WhoopWorkout.start >= workout_cutoff
+        ).all()
+        
+        whoop_workout_summary = []
+        for ww in whoop_workouts:
+            whoop_workout_summary.append({
+                "date": ww.start.strftime("%Y-%m-%d"),
+                "sport": ww.sport_name,
+                "strain": ww.strain,
+                "avg_hr": ww.average_heart_rate,
+                "max_hr": ww.max_heart_rate,
+                "kilojoules": ww.kilojoules
+            })
+            
+        # 4. Goals
+        goals = db.query(Goal).filter(
+            Goal.user_id == user.id,
+            Goal.status == "active"
+        ).all()
+        
+        # Categorize goals
+        dated_goals = []
+        undated_goals = []
+        for g in goals:
+            if g.target_date:
+                try:
+                    d_str = g.target_date.strftime("%Y-%m-%d") if isinstance(g.target_date, datetime) else str(g.target_date)[0:10]
+                except:
+                    d_str = str(g.target_date)
+
+                dated_goals.append({
+                    "description": g.description,
+                    "date": d_str,
+                    "type": g.type
+                })
+            else:
+                undated_goals.append({
+                    "description": g.description,
+                    "type": g.type
+                })
+
+        # Sort dated goals by date
+        dated_goals.sort(key=lambda x: x['date'])
+
+        return {
+            "profile": {
+                "age": user.age,
+                "gender": user.gender,
+                "height": user.height,
+                "weight": user.weight,
+                "weight": user.weight,
+                "units": user.settings.get('units', 'imperial'),
+                "preferences": user.settings
+            },
+            "activities": activity_summary,
+            "recoveries": recovery_summary,
+            "whoop_workouts": whoop_workout_summary,
+            "goals": {
+                "events": dated_goals,
+                "preferences": undated_goals
+            }
+        }
+    except Exception as e:
+        print(f"Error in get_context: {e}")
+        # Return empty context to avoid crash
+        return {
+            "profile": {},
+            "activities": [],
+            "recoveries": [],
+            "whoop_workouts": [],
+            "goals": {"events": [], "preferences": []}
+        }
+
+def get_or_generate_rolling_plan(user: User, db: Session):
+    try:
+        today = datetime.now().date()
+        today_str = today.strftime("%Y-%m-%d")
+        tomorrow_date = today + timedelta(days=1)
+        tomorrow_str = tomorrow_date.strftime("%Y-%m-%d")
+
+        context = get_context(user, db)
+
+        # Helper to get block type
+        def get_block_type(target_date):
+            block = db.query(WorkoutBlock).filter(
+                WorkoutBlock.user_id == user.id,
+                WorkoutBlock.date == target_date.strftime("%Y-%m-%d")
+            ).first()
+            return block.type if block else "Rest"
+
+        today_block_type = get_block_type(today)
+        tomorrow_block_type = get_block_type(tomorrow_date)
+
+        # 1. CHECK FOR EXISTING PLAN & VALIDATE
+        if user.last_plan_date == today_str and user.plan_today and user.plan_tomorrow:
+            
+            # Validation Flags
+            today_valid = True
+            tomorrow_valid = True
+            
+            # Check Date Integrity
+            if user.plan_today.get('date') != today_str:
+                print(f"Date Mismatch Today: {user.plan_today.get('date')} vs {today_str}")
+                today_valid = False
+            
+            # Check Schedule Integrity (Block Type)
+            stored_today_type = user.plan_today.get('block_type', 'Rest')
+            # Normalize for comparison (handle case sensitivity or slight variations if needed, but strict for now)
+            if stored_today_type != today_block_type:
+                print(f"Schedule Mismatch Today: Plan={stored_today_type} vs Schedule={today_block_type}")
+                today_valid = False
+
+            # Check Tomorrow Integrity
+            if user.plan_tomorrow.get('block_type', 'Rest') != tomorrow_block_type:
+                print(f"Schedule Mismatch Tomorrow: Plan={user.plan_tomorrow.get('block_type')} vs Schedule={tomorrow_block_type}")
+                tomorrow_valid = False
+            
+            if today_valid and tomorrow_valid:
+                return {"plan": [user.plan_today, user.plan_tomorrow]}
+            
+            # If invalid, regenerate specific days
+            if not today_valid:
+                print("Regenerating Today due to mismatch...")
+                user.plan_today = generate_single_day_plan(user, db, context, today)
+                user.plan_today['date'] = today_str # Force date correctness
+
+            if not tomorrow_valid:
+                print("Regenerating Tomorrow due to mismatch...")
+                user.plan_tomorrow = generate_single_day_plan(user, db, context, tomorrow_date)
+                user.plan_tomorrow['date'] = tomorrow_str # Force date correctness
+                
+            db.commit()
+            return {"plan": [user.plan_today, user.plan_tomorrow]}
+
+        
+        # 2. ROLLING UPDATE (Yesterday -> Today)
+        yesterday = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+        if user.last_plan_date == yesterday and user.plan_tomorrow:
+            print("Rolling over plan: Tomorrow -> Today")
+            
+            # Move Tomorrow -> Today
+            new_today = user.plan_tomorrow
+            new_today['date'] = today_str # Force Update date to today
+            
+            # Check if the "Old Tomorrow" (Now Today) matches the ACTUAL Today's Schedule
+            # It might have changed since yesterday!
+            if new_today.get('block_type') != today_block_type:
+                print("Rolled plan mismatch! Regenerating Today from scratch.")
+                refined_today = generate_single_day_plan(user, db, context, today)
+            else:
+                # Refine Today if it matches
+                refined_today = refine_daily_plan(new_today, context, client)
+            
+            # FORCE DATE on refined plan
+            refined_today['date'] = today_str 
+            
+            # Generate New Tomorrow
+            new_tomorrow = generate_single_day_plan(user, db, context, tomorrow_date)
+            # FORCE DATE on new tomorrow
+            new_tomorrow['date'] = tomorrow_str
+            
+            # Save
+            user.plan_today = refined_today
+            user.plan_tomorrow = new_tomorrow
+            user.last_plan_date = today_str
+            db.commit()
+            
+            return {"plan": [refined_today, new_tomorrow]}
+
+        # 3. FRESH GENERATION (Stale or New User)
+        print("Generating fresh 2-day plan")
+        plan_day_1 = generate_single_day_plan(user, db, context, today)
+        plan_day_1['date'] = today_str # Force date correctness
+        
+        plan_day_2 = generate_single_day_plan(user, db, context, tomorrow_date)
+        plan_day_2['date'] = tomorrow_str # Force date correctness
+        
+        user.plan_today = plan_day_1
+        user.plan_tomorrow = plan_day_2
+        user.last_plan_date = today_str
         db.commit()
         
-        return plan_data
-        
+        return {"plan": [plan_day_1, plan_day_2]}
+
     except Exception as e:
-        print(f"Error calling OpenAI: {e}")
+        print(f"Error in rolling plan generation: {e}")
+        import traceback
+        traceback.print_exc()
         return {"error": str(e)}
+
+def refine_daily_plan(plan_day, context, client):
+    """
+    Keeps the core routine but adjusts intensity/notes based on fresh recovery.
+    """
+    try:
+        system_prompt = f"""
+        You are an expert Personal Trainer. You have an existing workout plan for TODAY.
+        Your job is to REFINE it based on the client's latest recovery metrics (Sleep, HRV) without changing the core workout substance.
+        
+        Current Plan:
+        {json.dumps(plan_day)}
+        
+        Client Context:
+        - Age/Gender: {context['profile'].get('age')}/{context['profile'].get('gender')}
+        - Unit Pref: {context['profile'].get('units', 'imperial')}
+        - Recent Recovery: {json.dumps(context['recoveries'][-1:] if context['recoveries'] else 'No Data')}
+        
+        Instructions:
+        1. If recovery is POOR, lower intensity or suggest modifications in 'notes'.
+        2. If recovery is GREAT, you might increase intensity slightly.
+        3. DO NOT change the 'block_type', 'focus', or the core 'routine' steps unless absolutely necessary for safety.
+        4. Update 'date' to match the current day if needed.
+        
+        Output:
+        Return strict JSON of the modified plan object.
+        """
+        
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": system_prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = completion.choices[0].message.content
+        return json.loads(content)
+    except Exception as e:
+        print(f"Refinement failed: {e}")
+        return plan_day # Fallback to original
+
+def generate_single_day_plan(user, db, context, target_date):
+    """
+    Generates a single day plan for a specific date.
+    """
+    date_str = target_date.strftime("%Y-%m-%d")
+    
+    # Get specific block for this day
+    block = db.query(WorkoutBlock).filter(
+        WorkoutBlock.user_id == user.id,
+        WorkoutBlock.date == date_str
+    ).first()
+    
+    block_info = {
+        "date": date_str,
+        "type": block.type if block else "Rest",
+        "duration": block.planned_duration_minutes if block else 0,
+        "notes": block.notes if block else "No planned block"
+    }
+
+    system_prompt = f"""
+    You are an expert Personal Trainer. Generate a detailed workout for {date_str}.
+    
+    Client:
+    - Age/Gender: {context['profile'].get('age')}/{context['profile'].get('gender')}
+    - Units: {context['profile'].get('units', 'imperial')}
+    - Goals: {json.dumps(context['goals']['preferences'], indent=2)}
+    
+    Schedule Block:
+    {json.dumps(block_info)}
+    
+    Recent Data:
+    - Recovery: {json.dumps(context['recoveries'][-3:], indent=2)}
+    - Activities: {json.dumps(context['activities'][-3:], indent=2)}
+    
+    Instructions:
+    - strictly adhere to the Block Type and Duration.
+    - generate a specific 'routine' and 'focus'.
+    - Output strictly Valid JSON object:
+    {{
+        "date": "{date_str}",
+        "block_type": "...",
+        "intensity": "Low/Medium/High",
+        "focus": "...",
+        "routine": "...",
+        "notes": "..."
+    }}
+    """
+    
+    
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "system", "content": system_prompt}],
+        response_format={"type": "json_object"}
+    )
+    
+    plan_data = json.loads(completion.choices[0].message.content)
+    
+    # HARD OVERWRITE: Force the block_type to match the schedule strictly
+    # The user complained about mismatch, so we trust the DB record over the AI hallucination.
+    plan_data['block_type'] = block_info['type']
+    
+    return plan_data

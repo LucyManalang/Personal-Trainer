@@ -36,12 +36,12 @@ def initialize_weekly_schedule(
     new_blocks = []
     default_schedule = {
         0: ("Cardio", 45),       # Mon
-        1: ("Strength", 60),     # Tue
+        1: ("Ultimate", 120),    # Tue (User Pref)
         2: ("Cardio", 45),       # Wed
         3: ("Strength", 60),     # Thu
         4: ("Cardio", 45),       # Fri
         5: ("Long Cardio", 90),  # Sat
-        6: ("Recovery", 30)      # Sun
+        6: ("Ultimate", 120)     # Sun (User Pref)
     }
 
     for i in range(7):
@@ -58,6 +58,29 @@ def initialize_weekly_schedule(
             continue
             
         weekday = date_obj.weekday()
+        
+        # History-based estimation: Look at last 4 weeks
+        # DISABLE HISTORY FOR RESET: User wants a clean slate based on preferences (Default Dictionary)
+        # 1. Check local WorkoutBlock history
+        # past_dates = [(date_obj - timedelta(weeks=w)).strftime("%Y-%m-%d") for w in range(1, 5)]
+        
+        # history = db.query(WorkoutBlock).filter(
+        #     WorkoutBlock.user_id == current_user.id,
+        #     WorkoutBlock.date.in_(past_dates)
+        # ).all()
+        
+        # if history:
+        #     # Find most common type
+        #     types = [b.type for b in history]
+        #     w_type = max(set(types), key=types.count)
+        #     # Avg duration
+        #     durations = [b.planned_duration_minutes for b in history if b.type == w_type]
+        #     duration = sum(durations) // len(durations)
+        # else:
+            # 2. Check Strava/Whoop History (Fallback if no local blocks)
+            # ... (Skipping complex fallback to ensure clean reset)
+            
+        # 3. Use Default Pattern strictly
         w_type, duration = default_schedule.get(weekday, ("Rest", 0))
         
         block = WorkoutBlock(

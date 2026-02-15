@@ -5,9 +5,25 @@ from datetime import datetime
 # User Schemas
 class UserBase(BaseModel):
     email: str
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[int] = None
+    weight: Optional[int] = None
+    openai_model: Optional[str] = "gpt-4o"
+    settings: Optional[Any] = {}
+    strava_access_token: Optional[str] = None
+    whoop_access_token: Optional[str] = None
 
 class UserCreate(UserBase):
     pass
+
+class UserUpdate(BaseModel):
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[int] = None
+    weight: Optional[int] = None
+    openai_model: Optional[str] = None
+    settings: Optional[Any] = None
 
 class User(UserBase):
     id: int
@@ -72,11 +88,20 @@ class TrainingPlan(TrainingPlanBase):
 # Goal Schemas
 class GoalBase(BaseModel):
     description: str
-    type: str # 'short_term' or 'long_term'
+    type: str 
     status: Optional[str] = "active"
+    target_date: Optional[datetime] = None
+    is_completed: Optional[bool] = False
 
 class GoalCreate(GoalBase):
     pass
+
+class GoalUpdate(BaseModel):
+    description: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
+    target_date: Optional[datetime] = None
+    is_completed: Optional[bool] = None
 
 class Goal(GoalBase):
     id: int

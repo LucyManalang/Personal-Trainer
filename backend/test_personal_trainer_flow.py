@@ -35,7 +35,7 @@ def test_full_flow():
         print("No active goals found. Creating a sample goal...")
         new_goal = Goal(
             user_id=user.id,
-            description="Improve 5k time and build upper body strength",
+            description="Stay active and healthy",
             type="long_term"
         )
         db.add(new_goal)

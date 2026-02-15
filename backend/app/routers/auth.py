@@ -13,6 +13,10 @@ router = APIRouter()
 
 WHOOP_CLIENT_ID = os.getenv("WHOOP_CLIENT_ID")
 WHOOP_CLIENT_SECRET = os.getenv("WHOOP_CLIENT_SECRET")
+STRAVA_CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
+STRAVA_CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
+
+from ..schemas import User as UserSchema, UserUpdate
 
 def get_current_user(db: Session = Depends(get_db)):
     # Simple auth: return the first user in the DB.
@@ -21,6 +25,28 @@ def get_current_user(db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="No authenticated user found")
     return user
+
+@router.get("/user", response_model=UserSchema)
+def get_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/user/settings", response_model=UserSchema)
+def update_user_settings(
+    settings: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if settings.age is not None: current_user.age = settings.age
+    if settings.gender is not None: current_user.gender = settings.gender
+    if settings.height is not None: current_user.height = settings.height
+    if settings.weight is not None: current_user.weight = settings.weight
+    if settings.openai_model is not None: current_user.openai_model = settings.openai_model
+    if settings.settings is not None: current_user.settings = settings.settings
+    
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 
 
 # Strava
@@ -70,13 +96,14 @@ def strava_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
         
+    # Strava Callback
     user.strava_access_token = data["access_token"]
     user.strava_refresh_token = data["refresh_token"]
     user.strava_expires_at = data["expires_at"]
     
     db.commit()
     
-    return {"message": "Strava connected successfully", "athlete": athlete}
+    return RedirectResponse("http://localhost:5173/settings?status=success&service=strava")
 
 # WHOOP
 @router.get("/whoop/login")
@@ -100,7 +127,7 @@ def whoop_login():
 @router.get("/whoop/callback")
 def whoop_callback(code: str = None, error: str = None, state: str = None, db: Session = Depends(get_db)):
     if error:
-         return {"error": error, "detail": "Authorization failed or denied."}
+         return RedirectResponse(f"http://localhost:5173/settings?status=error&service=whoop&msg={error}")
     
     if not code:
         raise HTTPException(status_code=400, detail="No code received from WHOOP")
@@ -115,48 +142,32 @@ def whoop_callback(code: str = None, error: str = None, state: str = None, db: S
             "redirect_uri": "http://localhost:8000/auth/whoop/callback",
         }
         
-        print(f"DEBUG: Requesting token with payload: content_type=application/x-www-form-urlencoded")
         response = requests.post(token_url, data=payload)
         
-        print(f"DEBUG: Token response status: {response.status_code}")
-        print(f"DEBUG: Token response body: {response.text}")
-
         if response.status_code != 200:
-            raise HTTPException(status_code=400, detail=f"Failed to retrieve WHOOP token: {response.text}")
+             return RedirectResponse(f"http://localhost:5173/settings?status=error&service=whoop&msg=token_failed")
         
         data = response.json()
         
         user = db.query(User).first()
         if not user:
-            print("DEBUG: Creating new user")
             user = User(email="user@example.com")
             db.add(user)
             db.commit()
             db.refresh(user)
-        else:
-             print(f"DEBUG: Updating existing user: {user.id}")
 
         user.whoop_access_token = data.get("access_token")
         user.whoop_refresh_token = data.get("refresh_token")
-        # Handle expires_in carefully
+        
         expires_in = data.get("expires_in")
         if expires_in:
-            user.whoop_expires_at = int(expires_in) + 3600 # Store as roughly 'now + seconds' is wrong? 
-            # Wait, expires_at column expects a timestamp (integer)?
-            # In Strava implementation: user.strava_expires_at = data["expires_at"] (Unix timestamp)
-            # WHOOP gives 'expires_in' (seconds duration).
-            # So I should add to current time? 
-            # Earlier I did: user.whoop_expires_at = data["expires_in"] + 3600
-            # That logic was: take the duration (e.g. 3600) and add 3600? No, that's weird.
-            # It should be: current_time + expires_in.
             import time
             user.whoop_expires_at = int(time.time()) + int(expires_in)
         
         db.commit()
 
-        return {"message": "WHOOP connected successfully", "debug_data": data}
+        return RedirectResponse("http://localhost:5173/settings?status=success&service=whoop")
         
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return {"error": "Internal Server Error", "details": str(e), "trace": traceback.format_exc()}
+        print(f"Error in Whoop callback: {e}")
+        return RedirectResponse(f"http://localhost:5173/settings?status=error&service=whoop&msg=exception")

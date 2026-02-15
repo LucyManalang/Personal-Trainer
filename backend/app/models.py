@@ -9,15 +9,18 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     
-    # Strava Credentials
-    strava_access_token = Column(String, nullable=True)
-    strava_refresh_token = Column(String, nullable=True)
-    strava_expires_at = Column(Integer, nullable=True)
+    # User Settings & Profile
+    age = Column(Integer, nullable=True)
+    gender = Column(String, nullable=True) # "Male", "Female", "Other"
+    height = Column(Integer, nullable=True) # cm
+    weight = Column(Integer, nullable=True) # kg
+    openai_model = Column(String, default="gpt-4o")
+    settings = Column(JSON, default={}) # For flexible preferences
     
-    # WHOOP Credentials
-    whoop_access_token = Column(String, nullable=True)
-    whoop_refresh_token = Column(String, nullable=True)
-    whoop_expires_at = Column(Integer, nullable=True)
+    # Daily Plan Persistence (Rolling 2-day window)
+    plan_today = Column(JSON, nullable=True)
+    plan_tomorrow = Column(JSON, nullable=True)
+    last_plan_date = Column(String, nullable=True) # YYYY-MM-DD
 
     activities = relationship("StravaActivity", back_populates="user")
     recoveries = relationship("WhoopRecovery", back_populates="user")
@@ -25,6 +28,21 @@ class User(Base):
     goals = relationship("Goal", back_populates="user")
     workout_blocks = relationship("WorkoutBlock", back_populates="user")
     whoop_workouts = relationship("WhoopWorkout", back_populates="user")
+
+
+class Goal(Base):
+    __tablename__ = "goals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    description = Column(String)
+    type = Column(String) # 'short_term' or 'long_term' (or 'dated'/'undated' logic handled in frontend/service)
+    target_date = Column(DateTime, nullable=True) # For event-based goals
+    is_completed = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default="active") # active, completed, abandoned (redundant with is_completed? let's keep status for legacy or more states)
+
+    user = relationship("User", back_populates="goals")
 
 class StravaActivity(Base):
     __tablename__ = "strava_activities"
@@ -69,17 +87,6 @@ class TrainingPlan(Base):
 
     user = relationship("User", back_populates="training_plans")
 
-class Goal(Base):
-    __tablename__ = "goals"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    description = Column(String)
-    type = Column(String) # 'short_term' or 'long_term'
-    created_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default="active") # active, completed, abandoned
-
-    user = relationship("User", back_populates="goals")
 
 class WorkoutBlock(Base):
     __tablename__ = "workout_blocks"
