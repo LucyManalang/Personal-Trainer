@@ -22,7 +22,7 @@ function App() {
       <nav className="bg-gray-800 border-b border-gray-700 p-4 sticky top-0 z-10">
         <div className="w-full px-6 flex justify-between items-center">
           <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Lucy's Personal Trainer
+            Personal Trainer
           </Link>
           <div className="space-x-4 text-sm font-medium">
             <Link to="/" className={`transition ${location.pathname === '/' ? 'text-blue-400' : 'text-gray-300 hover:text-blue-300'}`}>Dashboard</Link>

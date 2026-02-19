@@ -1,8 +1,14 @@
+"""
+Pydantic schemas for API request/response validation.
+"""
+
 from pydantic import BaseModel
-from typing import List, Optional, Any
+from typing import Optional, Any
 from datetime import datetime
 
-# User Schemas
+
+# --- User ---
+
 class UserBase(BaseModel):
     email: str
     age: Optional[int] = None
@@ -30,7 +36,9 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
-# Strava Activity Schemas
+
+# --- Strava Activity ---
+
 class StravaActivityBase(BaseModel):
     strava_id: int
     name: str
@@ -51,7 +59,9 @@ class StravaActivity(StravaActivityBase):
     class Config:
         from_attributes = True
 
-# Whoop Recovery Schemas
+
+# --- WHOOP Recovery ---
+
 class WhoopRecoveryBase(BaseModel):
     whoop_id: str
     date: str
@@ -69,11 +79,13 @@ class WhoopRecovery(WhoopRecoveryBase):
     class Config:
         from_attributes = True
 
-# Training Plan Schemas
+
+# --- Training Plan ---
+
 class TrainingPlanBase(BaseModel):
     start_date: str
     end_date: str
-    content: Any # JSON
+    content: Any
     feedback: Optional[str] = None
 
 class TrainingPlanCreate(TrainingPlanBase):
@@ -85,10 +97,12 @@ class TrainingPlan(TrainingPlanBase):
     class Config:
         from_attributes = True
 
-# Goal Schemas
+
+# --- Goal ---
+
 class GoalBase(BaseModel):
     description: str
-    type: str 
+    type: str
     status: Optional[str] = "active"
     target_date: Optional[datetime] = None
     is_completed: Optional[bool] = False
@@ -110,9 +124,11 @@ class Goal(GoalBase):
     class Config:
         from_attributes = True
 
-# Workout Block Schemas
+
+# --- Workout Block ---
+
 class WorkoutBlockBase(BaseModel):
-    date: str # YYYY-MM-DD
+    date: str
     type: str
     planned_duration_minutes: int
     notes: Optional[str] = None
@@ -127,7 +143,9 @@ class WorkoutBlock(WorkoutBlockBase):
     class Config:
         from_attributes = True
 
-# Whoop Workout Schemas
+
+# --- WHOOP Workout ---
+
 class WhoopWorkoutBase(BaseModel):
     whoop_id: str
     sport_name: str

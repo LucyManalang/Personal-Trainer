@@ -11,11 +11,7 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
         e.preventDefault();
         const payload = {
             description,
-            type: isEvent ? 'event' : type, // or keep original type logic? User said "dated goals will be like events".
-            // Let's rely on target_date presence or explicit type.
-            // If we use 'type' field freely, we can use 'Event', 'Preference', 'Short Term' etc.
-            // If isEvent is true, force type 'Event' or similar?
-            // Or just save Date.
+            type: isEvent ? 'event' : type,
             target_date: isEvent && targetDate ? new Date(targetDate).toISOString() : null,
             is_completed: isCompleted,
             status: isCompleted ? 'completed' : 'active'
