@@ -37,7 +37,7 @@ export default function WeeklySchedule() {
                 <button
                     onClick={() => api.post('/schedule/init').then(res => setSchedule(res.data))}
                     className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition text-white">
-                    Initialize / Reset
+                    Reset
                 </button>
             </div>
 

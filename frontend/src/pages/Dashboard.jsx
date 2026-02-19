@@ -17,8 +17,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Goals Context */}
-                <div className="md:col-span-4 h-full">
-                    <GoalList />
+                <div className="md:col-span-4 relative">
+                    <div className="md:absolute md:inset-0">
+                        <GoalList />
+                    </div>
                 </div>
 
                 {/* Weekly Schedule Preview */}

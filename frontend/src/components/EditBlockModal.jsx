@@ -22,12 +22,12 @@ export default function EditBlockModal({ block, onClose, onSave }) {
                             onChange={e => setType(e.target.value)}
                             className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-blue-500"
                         >
-                            <option value="Strength">Strength</option>
-                            <option value="Cardio">Cardio</option>
-                            <option value="Long Cardio">Long Cardio</option>
+                            <option value="Gym">Gym</option>
+                            <option value="Ultimate">Ultimate</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Running">Running</option>
                             <option value="Recovery">Recovery</option>
                             <option value="Rest">Rest</option>
-                            <option value="Speedwork">Speedwork</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>

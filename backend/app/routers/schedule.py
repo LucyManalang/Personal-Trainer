@@ -31,31 +31,41 @@ def initialize_weekly_schedule(
     # Let's just do next 7 days from tomorrow for simplicity or next Monday?
     # User said "at the beginning of each week... for the next week". 
     # Let's do next 7 days starting tomorrow to be safe/immediately useful.
-    start_date = today + timedelta(days=1)
+    start_date = today
     
     new_blocks = []
-    default_schedule = {
-        0: ("Cardio", 45),       # Mon
-        1: ("Ultimate", 120),    # Tue (User Pref)
-        2: ("Cardio", 45),       # Wed
-        3: ("Strength", 60),     # Thu
-        4: ("Cardio", 45),       # Fri
-        5: ("Long Cardio", 90),  # Sat
-        6: ("Ultimate", 120)     # Sun (User Pref)
+    
+    # Try to load user-defined schedule from settings, fall back to hardcoded default
+    hardcoded_schedule = {
+        0: ("Gym", 60),          # Mon
+        1: ("Ultimate", 120),    # Tue
+        2: ("Running", 45),      # Wed
+        3: ("Gym", 60),          # Thu
+        4: ("Running", 45),      # Fri
+        5: ("Running", 60),      # Sat
+        6: ("Ultimate", 120)     # Sun
     }
+    
+    user_settings = current_user.settings or {}
+    saved_schedule = user_settings.get("schedule", {})
+    
+    if saved_schedule:
+        # Convert stored format {"0": ["Gym", 60], ...} → {0: ("Gym", 60), ...}
+        default_schedule = {}
+        for k, v in saved_schedule.items():
+            default_schedule[int(k)] = (v[0], int(v[1]))
+    else:
+        default_schedule = hardcoded_schedule
 
     for i in range(7):
         date_obj = start_date + timedelta(days=i)
         date_str = date_obj.strftime("%Y-%m-%d")
         
-        # Check if exists
-        existing = db.query(WorkoutBlock).filter(
+        # Delete any existing block for this date so reset truly resets
+        db.query(WorkoutBlock).filter(
             WorkoutBlock.user_id == current_user.id,
             WorkoutBlock.date == date_str
-        ).first()
-        
-        if existing:
-            continue
+        ).delete()
             
         weekday = date_obj.weekday()
         

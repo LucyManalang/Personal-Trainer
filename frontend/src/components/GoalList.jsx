@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../api/client';
 import GoalModal from './GoalModal';
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function GoalList() {
     const [goals, setGoals] = useState([]);
@@ -8,9 +10,17 @@ export default function GoalList() {
     const [editingGoal, setEditingGoal] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [showPreferences, setShowPreferences] = useState(true);
+    const [showGoals, setShowGoals] = useState(true);
+    const [showSchedule, setShowSchedule] = useState(true);
+
+    // Schedule state: { "0": ["Gym", 60], "1": ["Ultimate", 120], ... }
+    const [schedule, setSchedule] = useState({});
+    const [scheduleSaving, setScheduleSaving] = useState(false);
+    const saveTimeout = useRef(null);
 
     useEffect(() => {
         fetchGoals();
+        fetchSchedule();
     }, []);
 
     const fetchGoals = () => {
@@ -20,8 +30,49 @@ export default function GoalList() {
             .finally(() => setLoading(false));
     };
 
+    const fetchSchedule = () => {
+        api.get('/data/schedule')
+            .then(res => {
+                const saved = res.data.schedule || {};
+                // Build full 7-day schedule, filling in blanks
+                const full = {};
+                for (let i = 0; i < 7; i++) {
+                    full[String(i)] = saved[String(i)] || ['', 0];
+                }
+                setSchedule(full);
+            })
+            .catch(err => console.error("Failed to fetch schedule:", err));
+    };
+
+    const handleScheduleChange = (dayIdx, field, value) => {
+        setSchedule(prev => {
+            const updated = { ...prev };
+            const entry = [...(updated[String(dayIdx)] || ['', 0])];
+            if (field === 'type') entry[0] = value;
+            if (field === 'duration') entry[1] = parseInt(value) || 0;
+            updated[String(dayIdx)] = entry;
+            return updated;
+        });
+
+        // Debounced auto-save
+        if (saveTimeout.current) clearTimeout(saveTimeout.current);
+        saveTimeout.current = setTimeout(() => {
+            saveSchedule();
+        }, 800);
+    };
+
+    const saveSchedule = () => {
+        setScheduleSaving(true);
+        // Use latest state via functional access
+        setSchedule(current => {
+            api.put('/data/schedule', { schedule: current })
+                .catch(err => console.error("Failed to save schedule:", err))
+                .finally(() => setScheduleSaving(false));
+            return current;
+        });
+    };
+
     const handleSave = (goalData) => {
-        // Optimistic updatish or just refreshed
         const promise = editingGoal
             ? api.put(`/data/goals/${editingGoal.id}`, goalData)
             : api.post('/data/goals', goalData);
@@ -48,8 +99,6 @@ export default function GoalList() {
     };
 
     // Filter and Sort
-    // 1. Filter out completed.
-    // 2. Filter out past dated goals (events that have passed).
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -60,7 +109,20 @@ export default function GoalList() {
     });
 
     const datedGoals = activeGoals.filter(g => g.target_date).sort((a, b) => new Date(a.target_date) - new Date(b.target_date));
-    const undatedGoals = activeGoals.filter(g => !g.target_date);
+    const preferenceGoals = activeGoals.filter(g => !g.target_date && g.type === 'preference');
+    const undatedGoals = activeGoals.filter(g => !g.target_date && g.type !== 'preference');
+
+    // Collapsible section header
+    const SectionHeader = ({ label, isOpen, onToggle }) => (
+        <div
+            className="flex items-center justify-start cursor-pointer group"
+            onClick={onToggle}
+        >
+            <span className="text-xs text-gray-600 group-hover:text-gray-400 transition">{isOpen ? '▼' : '▶'}</span>
+            <span className="w-2" />
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-800 py-1">{label}</h4>
+        </div>
+    );
 
     return (
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 h-full flex flex-col">
@@ -94,7 +156,6 @@ export default function GoalList() {
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="text-sm text-gray-200 font-medium">{goal.description}</div>
-                                    {/* Checkbox visual placeholder (func via modal) */}
                                 </div>
                                 <div className="text-xs text-blue-300 mt-1 flex items-center gap-1">
                                     <span>📅</span>
@@ -105,20 +166,31 @@ export default function GoalList() {
                     </div>
                 )}
 
-                {/* Undated Goals (Preferences) */}
+                {/* Preferences (type === 'preference') */}
                 <div className="space-y-2">
-                    <div
-                        className="flex items-center justify-start cursor-pointer group"
-                        onClick={() => setShowPreferences(!showPreferences)}
-                    >
-                        <span className="text-xs text-gray-600 group-hover:text-gray-400 transition">{showPreferences ? '▼' : '▶'}</span>
-                        <span className="w-2" />
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-800 py-1">Preferences & Habits</h4>
-                    </div>
-
+                    <SectionHeader label="Preferences" isOpen={showPreferences} onToggle={() => setShowPreferences(!showPreferences)} />
                     {showPreferences && (
                         <div className="space-y-2">
-                            {undatedGoals.length === 0 && <div className="text-xs text-gray-600 italic">No preferences set.</div>}
+                            {preferenceGoals.length === 0 && <div className="text-xs text-gray-600 italic">No preferences set.</div>}
+                            {preferenceGoals.map(goal => (
+                                <div
+                                    key={goal.id}
+                                    onClick={() => setEditingGoal(goal)}
+                                    className="bg-gray-700/30 p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700 transition"
+                                >
+                                    <div className="text-sm text-gray-300">{goal.description}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Goals (short_term, long_term, other) */}
+                <div className="space-y-2">
+                    <SectionHeader label="Goals" isOpen={showGoals} onToggle={() => setShowGoals(!showGoals)} />
+                    {showGoals && (
+                        <div className="space-y-2">
+                            {undatedGoals.length === 0 && <div className="text-xs text-gray-600 italic">No goals set.</div>}
                             {undatedGoals.map(goal => (
                                 <div
                                     key={goal.id}
@@ -127,6 +199,40 @@ export default function GoalList() {
                                 >
                                     <div className="text-xs text-purple-300 uppercase font-bold mb-1 opacity-75">{goal.type.replace('_', ' ')}</div>
                                     <div className="text-sm text-gray-300">{goal.description}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Schedule (Manual weekly input) */}
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <SectionHeader label="Schedule" isOpen={showSchedule} onToggle={() => setShowSchedule(!showSchedule)} />
+                        {scheduleSaving && <span className="text-xs text-blue-400 animate-pulse">Saving...</span>}
+                    </div>
+                    {showSchedule && (
+                        <div className="space-y-1.5">
+                            {DAY_LABELS.map((day, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-gray-700/30 rounded-lg px-3 py-2 border border-gray-700">
+                                    <span className="text-xs text-gray-400 font-bold w-8 shrink-0">{day}</span>
+                                    <input
+                                        type="text"
+                                        value={schedule[String(idx)]?.[0] || ''}
+                                        onChange={e => handleScheduleChange(idx, 'type', e.target.value)}
+                                        placeholder="Activity"
+                                        className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition min-w-0"
+                                    />
+                                    <div className="relative shrink-0">
+                                        <input
+                                            type="number"
+                                            value={schedule[String(idx)]?.[1] || ''}
+                                            onChange={e => handleScheduleChange(idx, 'duration', e.target.value)}
+                                            placeholder="0"
+                                            className="w-16 bg-gray-700 border border-gray-600 rounded pl-2 pr-8 py-1 text-sm text-white text-right focus:border-blue-500 focus:outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">min</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>

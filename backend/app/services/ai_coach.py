@@ -312,14 +312,16 @@ def generate_single_day_plan(user, db, context, target_date):
     Instructions:
     - strictly adhere to the Block Type and Duration.
     - generate a specific 'routine' and 'focus'.
+    - CRITICAL: ALL values must be PLAIN STRINGS. Do NOT nest objects or arrays.
+    - The "routine" field must be a single string with numbered steps, e.g. "1. Warm up 10 min. 2. Squats 3x10. 3. Cool down."
     - Output strictly Valid JSON object:
     {{
         "date": "{date_str}",
         "block_type": "...",
         "intensity": "Low/Medium/High",
-        "focus": "...",
-        "routine": "...",
-        "notes": "..."
+        "focus": "a plain string",
+        "routine": "a plain string with numbered steps",
+        "notes": "a plain string"
     }}
     """
     
@@ -333,7 +335,14 @@ def generate_single_day_plan(user, db, context, target_date):
     plan_data = json.loads(completion.choices[0].message.content)
     
     # HARD OVERWRITE: Force the block_type to match the schedule strictly
-    # The user complained about mismatch, so we trust the DB record over the AI hallucination.
     plan_data['block_type'] = block_info['type']
+    
+    # Flatten any nested objects/arrays to plain strings
+    for key in ['routine', 'focus', 'notes', 'intensity']:
+        val = plan_data.get(key)
+        if isinstance(val, list):
+            plan_data[key] = ' '.join([str(item) if not isinstance(item, dict) else ' '.join(f"{k}: {v}" for k, v in item.items()) for item in val])
+        elif isinstance(val, dict):
+            plan_data[key] = ' '.join(f"{k}: {v}" for k, v in val.items())
     
     return plan_data

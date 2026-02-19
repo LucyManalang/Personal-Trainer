@@ -69,6 +69,31 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Goal deleted"}
 
+# --- User Schedule (stored in user.settings["schedule"]) ---
+
+@router.get("/schedule")
+def get_schedule(db: Session = Depends(get_db)):
+    user = db.query(User).first()
+    if not user:
+        return {"schedule": {}}
+    settings = user.settings or {}
+    return {"schedule": settings.get("schedule", {})}
+
+@router.put("/schedule")
+def update_schedule(body: dict, db: Session = Depends(get_db)):
+    user = db.query(User).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    schedule_data = body.get("schedule", {})
+    settings = dict(user.settings or {})
+    settings["schedule"] = schedule_data
+    user.settings = settings
+
+    db.commit()
+    db.refresh(user)
+    return {"schedule": settings["schedule"]}
+
 @router.post("/sync/strava")
 def sync_strava(db: Session = Depends(get_db)):
     # Get first user for now

@@ -35,7 +35,7 @@ export default function DailyPlan() {
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg h-full">
             <div className="flex justify-between items-start mb-4">
                 <div>
-                    <h3 className="text-xl font-semibold text-blue-400">Coach's Plan</h3>
+                    <h3 className="text-xl font-semibold text-blue-400">Daily Plan</h3>
                     <p className="text-xs text-gray-400">Based on your recovery & goals</p>
                 </div>
                 <button
@@ -64,9 +64,21 @@ export default function DailyPlan() {
                         // Helper to safely render text
                         const renderText = (val) => {
                             if (typeof val === 'string') return val;
-                            if (typeof val === 'number') return val;
-                            if (Array.isArray(val)) return val.join(', ');
-                            if (val && typeof val === 'object') return JSON.stringify(val); // Fallback for objects
+                            if (typeof val === 'number') return String(val);
+                            if (Array.isArray(val)) return val.map(v => renderText(v)).join('\n');
+                            if (val && typeof val === 'object') {
+                                // Try to extract meaningful text from nested objects
+                                return Object.entries(val)
+                                    .map(([k, v]) => {
+                                        const text = renderText(v);
+                                        // Skip keys that look like metadata
+                                        if (!text) return '';
+                                        // If the value is just a string, prefix with key for context
+                                        return `${k}: ${text}`;
+                                    })
+                                    .filter(Boolean)
+                                    .join('\n');
+                            }
                             return '';
                         };
 
