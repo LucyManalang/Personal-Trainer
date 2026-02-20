@@ -43,41 +43,41 @@ export default function DailyPlan() {
         for (const [service, info] of Object.entries(syncInfo)) {
             const name = displayNames[service] || service;
             if (info.error && info.error !== "Not connected") {
-                items.push(<span key={service} className="text-amber-400">⚠ {name} sync failed</span>);
+                items.push(<span key={service} className="text-amber-600 dark:text-amber-400">⚠ {name} sync failed</span>);
             } else if (info.error === "Not connected") {
                 // Skip disconnected services
             } else {
                 if (info.synced > 0) {
-                    items.push(<span key={service} className="text-emerald-400">✓ {name}: {info.synced} new</span>);
+                    items.push(<span key={service} className="text-emerald-600 dark:text-emerald-400">✓ {name}: {info.synced} new</span>);
                 } else {
-                    items.push(<span key={service} className="text-emerald-400">✓ {name}</span>);
+                    items.push(<span key={service} className="text-emerald-600 dark:text-emerald-400">✓ {name}</span>);
                 }
             }
         }
 
         if (items.length === 0) return null;
         return (
-            <div className="flex items-center gap-3 text-xs px-3 py-1.5 bg-gray-700/30 rounded-lg border border-gray-700">
-                <span className="text-gray-500 font-medium">Sync</span>
+            <div className="flex items-center gap-3 text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
+                <span className="text-gray-400 dark:text-gray-500 font-medium">Sync</span>
                 {items}
             </div>
         );
     };
 
     return (
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg h-full min-h-[400px]">
-            <div className="flex justify-between items-center mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 shadow-lg h-full min-h-[400px] transition-colors duration-200">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <div>
-                    <h3 className="text-xl font-semibold text-blue-400">Daily Plan</h3>
-                    <p className="text-xs text-gray-400">Based on your recovery & goals</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-blue-600 dark:text-blue-400">Daily Plan</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Based on your recovery & goals</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-row-reverse sm:flex-row items-center justify-end sm:justify-start gap-2 flex-wrap">
                     {renderSyncStatus()}
                     <button
                         onClick={handleGenerate}
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50">
-                        {loading ? 'Syncing & Thinking...' : 'Refresh'}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 whitespace-nowrap">
+                        {loading ? 'Syncing...' : 'Refresh'}
                     </button>
                 </div>
             </div>
@@ -87,7 +87,7 @@ export default function DailyPlan() {
             {error && <div className="text-red-400 text-sm mb-4">{error}</div>}
 
             {!plan && !loading && !error && (
-                <div className="bg-gray-900/50 rounded-lg p-8 text-center text-gray-500">
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-8 text-center text-gray-500">
                     <p>No plan generated yet.</p>
                     <p className="text-sm mt-2">Click "Refresh" to consult your AI Coach.</p>
                 </div>
@@ -122,17 +122,17 @@ export default function DailyPlan() {
 
                         const getIntensityClass = (intensity) => {
                             const val = String(intensity).toLowerCase();
-                            if (val.includes('low')) return 'bg-green-900/20 text-green-400 border-green-700/50';
-                            if (val.includes('mod') || val.includes('med')) return 'bg-yellow-900/20 text-yellow-400 border-yellow-700/50';
-                            if (val.includes('high')) return 'bg-red-900/20 text-red-400 border-red-700/50';
-                            return 'bg-gray-900/20 text-gray-400 border-gray-700/50';
+                            if (val.includes('low')) return 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700/50';
+                            if (val.includes('mod') || val.includes('med')) return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700/50';
+                            if (val.includes('high')) return 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700/50';
+                            return 'bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700/50';
                         };
 
                         return (
-                            <div key={idx} className="bg-gray-700/30 rounded-lg p-4 border border-gray-700 flex flex-col md:flex-row gap-4 relative">
-                                <div className="md:w-1/4 border-r border-gray-700 pr-4">
-                                    <div className="text-blue-300 font-bold uppercase text-sm tracking-wider">{idx === 0 ? "TODAY" : "TOMORROW"} - {renderText(day.block_type)}</div>
-                                    <div className="text-sm text-gray-400 mt-1">
+                            <div key={idx} className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-3 sm:gap-4 relative">
+                                <div className="md:w-1/4 md:border-r border-b md:border-b-0 border-gray-200 dark:border-gray-700 md:pr-4 pb-3 md:pb-0">
+                                    <div className="text-blue-600 dark:text-blue-300 font-bold uppercase text-xs sm:text-sm tracking-wider">{idx === 0 ? "TODAY" : "TOMORROW"} - {renderText(day.block_type)}</div>
+                                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                                         {day.date ? new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : ''}
                                     </div>
                                     <div className={`mt-2 inline-block px-2 py-1 rounded text-xs border ${getIntensityClass(day.intensity)}`}>
@@ -140,8 +140,8 @@ export default function DailyPlan() {
                                     </div>
                                 </div>
                                 <div className="md:w-3/4">
-                                    <h4 className="font-medium text-white mb-1">{renderText(day.focus)}</h4>
-                                    <div className="text-sm text-gray-300 leading-relaxed space-y-2">
+                                    <h4 className="font-medium text-gray-900 dark:text-white mb-1">{renderText(day.focus)}</h4>
+                                    <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
                                         {renderText(day.routine).split(/(?=\d+\.\s)/).map((step, i) => {
                                             const trimmed = step.trim();
                                             if (!trimmed) return null;
@@ -152,15 +152,15 @@ export default function DailyPlan() {
                                             )
                                         })}
                                     </div>
-                                    {day.notes && <div className="mt-3 text-xs text-gray-400 italic">💡 {renderText(day.notes)}</div>}
+                                    {day.notes && <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 italic">💡 {renderText(day.notes)}</div>}
                                 </div>
                                 {/* Pencil edit button */}
                                 <button
                                     onClick={() => setEditingDay({ idx, label: idx === 0 ? 'today' : 'tomorrow' })}
-                                    className="absolute bottom-3 left-3 text-gray-500 hover:text-blue-400 transition p-1 rounded hover:bg-gray-700/50"
+                                    className="absolute top-3 right-3 md:top-auto md:right-auto md:bottom-3 md:left-3 text-gray-400 dark:text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700/50"
                                     title="Edit this day's plan"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                     </svg>
                                 </button>

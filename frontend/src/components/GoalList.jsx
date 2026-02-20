@@ -9,9 +9,28 @@ export default function GoalList() {
     const [loading, setLoading] = useState(true);
     const [editingGoal, setEditingGoal] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [showPreferences, setShowPreferences] = useState(true);
-    const [showGoals, setShowGoals] = useState(true);
-    const [showSchedule, setShowSchedule] = useState(true);
+    const [showPreferences, setShowPreferences] = useState(() => {
+        const saved = localStorage.getItem('goalList.showPreferences');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showGoals, setShowGoals] = useState(() => {
+        const saved = localStorage.getItem('goalList.showGoals');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showSchedule, setShowSchedule] = useState(() => {
+        const saved = localStorage.getItem('goalList.showSchedule');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('goalList.showPreferences', JSON.stringify(showPreferences));
+    }, [showPreferences]);
+    useEffect(() => {
+        localStorage.setItem('goalList.showGoals', JSON.stringify(showGoals));
+    }, [showGoals]);
+    useEffect(() => {
+        localStorage.setItem('goalList.showSchedule', JSON.stringify(showSchedule));
+    }, [showSchedule]);
 
     // Schedule state: { "0": ["Gym", 60], "1": ["Ultimate", 120], ... }
     const [schedule, setSchedule] = useState({});
@@ -118,21 +137,21 @@ export default function GoalList() {
             className="flex items-center justify-start cursor-pointer group"
             onClick={onToggle}
         >
-            <span className="text-xs text-gray-600 group-hover:text-gray-400 transition">{isOpen ? '▼' : '▶'}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition">{isOpen ? '▼' : '▶'}</span>
             <span className="w-2" />
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-800 py-1">{label}</h4>
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider py-1">{label}</h4>
         </div>
     );
 
     return (
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 h-full flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors duration-200">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-purple-400 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-2">
                     <span className="text-xl">🎯</span> Goals
                 </h3>
                 <button
                     onClick={() => setIsCreating(true)}
-                    className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition"
+                    className="text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                     title="Add Goal"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,17 +166,17 @@ export default function GoalList() {
                 {/* Dated Goals (Events) */}
                 {datedGoals.length > 0 && (
                     <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-800 py-1">Upcoming Events</h4>
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider sticky top-0 bg-white dark:bg-gray-800 py-1">Upcoming Events</h4>
                         {datedGoals.map(goal => (
                             <div
                                 key={goal.id}
                                 onClick={() => setEditingGoal(goal)}
-                                className="bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-500 cursor-pointer hover:bg-gray-700 transition group"
+                                className="bg-blue-50 dark:bg-gray-700/50 p-3 rounded-lg border-l-4 border-blue-500 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-700 transition group"
                             >
                                 <div className="flex justify-between items-start">
-                                    <div className="text-sm text-gray-200 font-medium">{goal.description}</div>
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">{goal.description}</div>
                                 </div>
-                                <div className="text-xs text-blue-300 mt-1 flex items-center gap-1">
+                                <div className="text-xs text-blue-600 dark:text-blue-300 mt-1 flex items-center gap-1">
                                     <span>📅</span>
                                     {new Date(goal.target_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </div>
@@ -171,14 +190,14 @@ export default function GoalList() {
                     <SectionHeader label="Preferences" isOpen={showPreferences} onToggle={() => setShowPreferences(!showPreferences)} />
                     {showPreferences && (
                         <div className="space-y-2">
-                            {preferenceGoals.length === 0 && <div className="text-xs text-gray-600 italic">No preferences set.</div>}
+                            {preferenceGoals.length === 0 && <div className="text-xs text-gray-400 dark:text-gray-600 italic">No preferences set.</div>}
                             {preferenceGoals.map(goal => (
                                 <div
                                     key={goal.id}
                                     onClick={() => setEditingGoal(goal)}
-                                    className="bg-gray-700/30 p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700 transition"
+                                    className="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <div className="text-sm text-gray-300">{goal.description}</div>
+                                    <div className="text-sm text-gray-700 dark:text-gray-300">{goal.description}</div>
                                 </div>
                             ))}
                         </div>
@@ -190,15 +209,15 @@ export default function GoalList() {
                     <SectionHeader label="Goals" isOpen={showGoals} onToggle={() => setShowGoals(!showGoals)} />
                     {showGoals && (
                         <div className="space-y-2">
-                            {undatedGoals.length === 0 && <div className="text-xs text-gray-600 italic">No goals set.</div>}
+                            {undatedGoals.length === 0 && <div className="text-xs text-gray-400 dark:text-gray-600 italic">No goals set.</div>}
                             {undatedGoals.map(goal => (
                                 <div
                                     key={goal.id}
                                     onClick={() => setEditingGoal(goal)}
-                                    className="bg-gray-700/30 p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700 transition"
+                                    className="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <div className="text-xs text-purple-300 uppercase font-bold mb-1 opacity-75">{goal.type.replace('_', ' ')}</div>
-                                    <div className="text-sm text-gray-300">{goal.description}</div>
+                                    <div className="text-xs text-purple-600 dark:text-purple-300 uppercase font-bold mb-1 opacity-75">{goal.type.replace('_', ' ')}</div>
+                                    <div className="text-sm text-gray-700 dark:text-gray-300">{goal.description}</div>
                                 </div>
                             ))}
                         </div>
@@ -214,14 +233,14 @@ export default function GoalList() {
                     {showSchedule && (
                         <div className="space-y-1.5">
                             {DAY_LABELS.map((day, idx) => (
-                                <div key={idx} className="flex items-center gap-2 bg-gray-700/30 rounded-lg px-3 py-2 border border-gray-700">
-                                    <span className="text-xs text-gray-400 font-bold w-8 shrink-0">{day}</span>
+                                <div key={idx} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/30 rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 font-bold w-8 shrink-0">{day}</span>
                                     <input
                                         type="text"
                                         value={schedule[String(idx)]?.[0] || ''}
                                         onChange={e => handleScheduleChange(idx, 'type', e.target.value)}
                                         placeholder="Activity"
-                                        className="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition min-w-0"
+                                        className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:outline-none transition min-w-0"
                                     />
                                     <div className="relative shrink-0">
                                         <input
@@ -229,7 +248,7 @@ export default function GoalList() {
                                             value={schedule[String(idx)]?.[1] || ''}
                                             onChange={e => handleScheduleChange(idx, 'duration', e.target.value)}
                                             placeholder="0"
-                                            className="w-16 bg-gray-700 border border-gray-600 rounded pl-2 pr-8 py-1 text-sm text-white text-right focus:border-blue-500 focus:outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            className="w-16 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded pl-2 pr-8 py-1 text-sm text-gray-900 dark:text-white text-right focus:border-blue-500 focus:outline-none transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         />
                                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">min</span>
                                     </div>

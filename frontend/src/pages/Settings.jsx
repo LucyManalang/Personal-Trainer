@@ -9,7 +9,7 @@ export default function Settings() {
         heightFt: '',
         heightIn: '',
         weight: '',
-        openai_model: 'gpt-4o',
+        openai_model: 'gpt-5-mini',
         units: 'imperial', // Default to imperial
         settings: {}
     });
@@ -72,7 +72,7 @@ export default function Settings() {
                     heightFt: heightFt,
                     heightIn: heightIn,
                     weight: weightLbs,
-                    openai_model: user.openai_model || 'gpt-4o',
+                    openai_model: user.openai_model || 'gpt-5-mini',
                     units: settings.units || 'imperial',
                     settings: settings
                 });
@@ -131,25 +131,25 @@ export default function Settings() {
     if (loading) return <div className="text-gray-400">Loading settings...</div>;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
             <header>
-                <h2 className="text-3xl font-bold mb-1">Settings</h2>
-                <p className="text-gray-400">Customize your trainer and profile</p>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-1">Settings</h2>
+                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Customize your trainer and profile</p>
             </header>
 
             {/* User Profile */}
-            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h3 className="text-xl font-semibold mb-4 text-blue-400">Profile</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600 dark:text-blue-400">Profile</h3>
                 <form onSubmit={handleSave} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm text-gray-400 mb-1">Age</label>
+                            <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Age</label>
                             <input
                                 type="number"
                                 name="age"
                                 value={profile.age}
                                 onChange={handleChange}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
                                 placeholder="e.g. 30"
                             />
                         </div>
@@ -159,7 +159,7 @@ export default function Settings() {
                                 name="gender"
                                 value={profile.gender}
                                 onChange={handleChange}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
                             >
                                 <option value="">Select...</option>
                                 <option value="Male">Male</option>
@@ -176,7 +176,7 @@ export default function Settings() {
                                         name="heightFt"
                                         value={profile.heightFt}
                                         onChange={handleChange}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white pr-8"
+                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white pr-8"
                                         placeholder="Ft"
                                     />
                                     <span className="absolute right-3 top-2 text-gray-500 text-sm">ft</span>
@@ -187,7 +187,7 @@ export default function Settings() {
                                         name="heightIn"
                                         value={profile.heightIn}
                                         onChange={handleChange}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white pr-8"
+                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white pr-8"
                                         placeholder="In"
                                     />
                                     <span className="absolute right-3 top-2 text-gray-500 text-sm">in</span>
@@ -202,7 +202,7 @@ export default function Settings() {
                                     name="weight"
                                     value={profile.weight}
                                     onChange={handleChange}
-                                    className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white pr-10"
+                                    className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white pr-10"
                                     placeholder="e.g. 180"
                                 />
                                 <span className="absolute right-3 top-2 text-gray-500 text-sm">lbs</span>
@@ -210,17 +210,17 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-gray-700">
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                         <label className="block text-sm text-gray-400 mb-1">AI Model</label>
                         <select
                             name="openai_model"
                             value={profile.openai_model}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
                         >
-                            <option value="gpt-4o">GPT-4o (Recommended)</option>
-                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="gpt-5.2">GPT-5.2 (Most Capable)</option>
+                            <option value="gpt-5-mini">GPT-5 Mini (Recommended)</option>
+                            <option value="gpt-5-nano">GPT-5 Nano (Fastest)</option>
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Controls the intelligence level of your coach.</p>
                     </div>
@@ -239,21 +239,21 @@ export default function Settings() {
             </div>
 
             {/* Integrations */}
-            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h3 className="text-xl font-semibold mb-4 text-purple-400">Integrations</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 text-purple-600 dark:text-purple-400">Integrations</h3>
                 <div className="space-y-4">
                     {/* Strava */}
-                    <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center gap-3">
                             {/* Strava Icon placeholder */}
                             <span className="text-2xl">🏃</span>
                             <div>
-                                <h4 className="font-bold text-white">Strava</h4>
-                                <p className="text-xs text-gray-400">{authStatus.strava ? 'Connected' : 'Not Connected'}</p>
+                                <h4 className="font-bold text-gray-900 dark:text-white">Strava</h4>
+                                {/* <p className="text-xs text-gray-400">{authStatus.strava ? 'Connected' : 'Not Connected'}</p> */}
                             </div>
                         </div>
                         {authStatus.strava ? (
-                            <button disabled className="bg-green-900/40 text-green-400 border border-green-800 px-3 py-1 rounded text-sm font-medium cursor-default">
+                            <button disabled className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800 px-3 py-1 rounded text-sm font-medium cursor-default">
                                 Connected
                             </button>
                         ) : (
@@ -262,17 +262,17 @@ export default function Settings() {
                     </div>
 
                     {/* Whoop */}
-                    <div className="flex justify-between items-center p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center gap-3">
                             {/* Whoop Icon placeholder */}
                             <span className="text-2xl">⌚</span>
                             <div>
-                                <h4 className="font-bold text-white">WHOOP</h4>
-                                <p className="text-xs text-gray-400">{authStatus.whoop ? 'Connected' : 'Not Connected'}</p>
+                                <h4 className="font-bold text-gray-900 dark:text-white">WHOOP</h4>
+                                {/* <p className="text-xs text-gray-400">{authStatus.whoop ? 'Connected' : 'Not Connected'}</p> */}
                             </div>
                         </div>
                         {authStatus.whoop ? (
-                            <button disabled className="bg-green-900/40 text-green-400 border border-green-800 px-3 py-1 rounded text-sm font-medium cursor-default">
+                            <button disabled className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800 px-3 py-1 rounded text-sm font-medium cursor-default">
                                 Connected
                             </button>
                         ) : (

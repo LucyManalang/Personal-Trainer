@@ -15,7 +15,7 @@ class UserBase(BaseModel):
     gender: Optional[str] = None
     height: Optional[int] = None
     weight: Optional[int] = None
-    openai_model: Optional[str] = "gpt-4o"
+    openai_model: Optional[str] = "gpt-5-mini"
     settings: Optional[Any] = {}
     strava_access_token: Optional[str] = None
     whoop_access_token: Optional[str] = None

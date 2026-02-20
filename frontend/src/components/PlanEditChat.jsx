@@ -62,17 +62,17 @@ export default function PlanEditChat({ dayLabel, dayPlan, onClose, onPlanUpdated
     const dayTitle = dayLabel === 'today' ? 'TODAY' : 'TOMORROW';
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-lg shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 sm:rounded-xl border-t sm:border border-gray-200 dark:border-gray-700 w-full sm:max-w-lg shadow-2xl flex flex-col h-[85vh] sm:h-auto" style={{ maxHeight: '85vh' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
-                        <h3 className="text-lg font-bold text-white">Edit {dayTitle}'s Plan</h3>
-                        <p className="text-xs text-gray-400">{blockType} — Chat with your coach to adjust</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Edit {dayTitle}'s Plan</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{blockType} — Chat with your coach to adjust</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition p-1"
+                        className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition p-1"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -95,8 +95,8 @@ export default function PlanEditChat({ dayLabel, dayPlan, onClose, onPlanUpdated
                         >
                             <div
                                 className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'bg-blue-600 text-white rounded-br-sm'
-                                        : 'bg-gray-700 text-gray-200 rounded-bl-sm'
+                                    ? 'bg-blue-600 text-white rounded-br-sm'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm'
                                     }`}
                             >
                                 {msg.content}
@@ -105,7 +105,7 @@ export default function PlanEditChat({ dayLabel, dayPlan, onClose, onPlanUpdated
                     ))}
                     {loading && (
                         <div className="flex justify-start">
-                            <div className="bg-gray-700 text-gray-400 rounded-xl px-4 py-2.5 text-sm rounded-bl-sm">
+                            <div className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl px-4 py-2.5 text-sm rounded-bl-sm">
                                 <span className="animate-pulse">Thinking...</span>
                             </div>
                         </div>
@@ -114,7 +114,7 @@ export default function PlanEditChat({ dayLabel, dayPlan, onClose, onPlanUpdated
                 </div>
 
                 {/* Input */}
-                <div className="px-5 py-3 border-t border-gray-700">
+                <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex gap-2">
                         <input
                             type="text"
@@ -122,7 +122,7 @@ export default function PlanEditChat({ dayLabel, dayPlan, onClose, onPlanUpdated
                             onChange={e => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Tell the coach what to change..."
-                            className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none transition"
+                            className="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 focus:outline-none transition"
                             disabled={loading}
                             autoFocus
                         />

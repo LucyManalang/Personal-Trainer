@@ -3,7 +3,7 @@
 ## Vision
 An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlike a static plan, this trainer understands your entire week—from Ultimate Frisbee to Cardio and Recovery. By integrating **Strava** and **WHOOP**, it dynamically generates detailed workout routines for your scheduled blocks, ensuring you train smarter, not just harder.
 
-## Key Features
+## Key Feature
 
 ### 1. Holistic Goal Tracking
 - **Short-term & Long-term Goals**: Define what you want to achieve (e.g., "Run comfortably at 5:30/km", "Chicago Marathon"). The AI considers these when planning every workout.

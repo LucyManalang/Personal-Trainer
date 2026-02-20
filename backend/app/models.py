@@ -23,7 +23,7 @@ class User(Base):
     gender = Column(String, nullable=True)
     height = Column(Integer, nullable=True)  # cm
     weight = Column(Integer, nullable=True)  # kg
-    openai_model = Column(String, default="gpt-4o")
+    openai_model = Column(String, default="gpt-5-mini")
     settings = Column(JSON, default={})
 
     # OAuth tokens

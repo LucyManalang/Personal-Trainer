@@ -11,16 +11,16 @@ export default function EditBlockModal({ block, onClose, onSave }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 w-full max-w-md shadow-2xl">
-                <h3 className="text-xl font-bold mb-4 text-white">Edit Workout Block</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-t-xl sm:rounded-xl border-t sm:border border-gray-200 dark:border-gray-700 w-full sm:max-w-md shadow-2xl">
+                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Edit Workout Block</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Type</label>
+                        <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Type</label>
                         <select
                             value={type}
                             onChange={e => setType(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                         >
                             <option value="Gym">Gym</option>
                             <option value="Ultimate">Ultimate</option>
@@ -33,21 +33,21 @@ export default function EditBlockModal({ block, onClose, onSave }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Duration (min)</label>
+                        <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Duration (min)</label>
                         <input
                             type="number"
                             value={duration}
                             onChange={e => setDuration(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Notes</label>
+                        <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Notes</label>
                         <textarea
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white focus:outline-none focus:border-blue-500 h-24"
+                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 h-24"
                         />
                     </div>
 
@@ -55,7 +55,7 @@ export default function EditBlockModal({ block, onClose, onSave }) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-300 hover:text-white transition"
+                            className="px-4 py-2 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition"
                         >
                             Cancel
                         </button>

@@ -3,7 +3,7 @@ AI Coach service — context gathering and plan generation via OpenAI.
 
 Builds a comprehensive context from user profile, Strava activities,
 WHOOP recovery/workouts, and goals, then generates rolling 2-day
-workout plans with GPT-4o.
+workout plans via OpenAI.
 """
 
 from sqlalchemy.orm import Session
@@ -220,7 +220,7 @@ def get_or_generate_rolling_plan(user: User, db: Session):
             if new_today.get('block_type') != today_block_type:
                 refined_today = generate_single_day_plan(user, db, context, today)
             else:
-                refined_today = refine_daily_plan(new_today, context, client)
+                refined_today = refine_daily_plan(new_today, context, client, model=user.openai_model or "gpt-5-mini")
 
             refined_today['date'] = today_str
 
@@ -254,7 +254,7 @@ def get_or_generate_rolling_plan(user: User, db: Session):
         return {"error": str(e), "sync": sync_result}
 
 
-def refine_daily_plan(plan_day, context, client):
+def refine_daily_plan(plan_day, context, client, model="gpt-5-mini"):
     """
     Refine an existing day plan based on fresh recovery data.
     Adjusts intensity/notes without changing the core routine.
@@ -283,7 +283,7 @@ def refine_daily_plan(plan_day, context, client):
         """
 
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model=model,
             messages=[{"role": "system", "content": system_prompt}],
             response_format={"type": "json_object"}
         )
@@ -296,7 +296,7 @@ def refine_daily_plan(plan_day, context, client):
 
 def generate_single_day_plan(user, db, context, target_date):
     """
-    Generate a detailed workout plan for a single day using GPT-4o.
+    Generate a detailed workout plan for a single day.
     The plan respects the scheduled block type and duration, and incorporates
     the user's goals and recent recovery data.
     """
@@ -346,7 +346,7 @@ def generate_single_day_plan(user, db, context, target_date):
     """
 
     completion = client.chat.completions.create(
-        model="gpt-4o",
+        model=user.openai_model or "gpt-5-mini",
         messages=[{"role": "system", "content": system_prompt}],
         response_format={"type": "json_object"}
     )
@@ -372,7 +372,7 @@ def generate_single_day_plan(user, db, context, target_date):
 
 def edit_day_plan(user: User, db: Session, day_key: str, messages: list):
     """
-    Edit a day's plan via conversational chat with GPT-4o.
+    Edit a day's plan via conversational chat.
     Takes the current plan and user messages, returns a chat reply
     and an updated plan. Persists the revision.
 
@@ -417,7 +417,7 @@ Output strict JSON:
 
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model=user.openai_model or "gpt-5-mini",
             messages=api_messages,
             response_format={"type": "json_object"}
         )

@@ -20,17 +20,17 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 w-full max-w-md shadow-2xl">
-                <h3 className="text-xl font-bold mb-4 text-white">{goal ? 'Edit Goal' : 'New Goal'}</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-t-xl sm:rounded-xl border-t sm:border border-gray-200 dark:border-gray-700 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{goal ? 'Edit Goal' : 'New Goal'}</h3>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm text-gray-400 mb-1">Description</label>
+                        <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Description</label>
                         <textarea
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="w-full max-h-36 min-h-12 bg-gray-700 border border-gray-600 rounded p-2 text-white break-words"
+                            className="w-full max-h-36 min-h-12 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white break-words"
                             placeholder="e.g. Run a marathon, Prefer morning workouts..."
                             required
                         />
@@ -42,20 +42,20 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
                                 type="checkbox"
                                 checked={isEvent}
                                 onChange={e => setIsEvent(e.target.checked)}
-                                className="rounded bg-gray-700 border-gray-600"
+                                className="rounded bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                             />
-                            <span className="text-sm text-gray-300">Is this an Event/Deadline?</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">Is this an Event/Deadline?</span>
                         </label>
                     </div>
 
                     {isEvent && (
                         <div>
-                            <label className="block text-sm text-gray-400 mb-1">Target Date</label>
+                            <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Target Date</label>
                             <input
                                 type="date"
                                 value={targetDate}
                                 onChange={e => setTargetDate(e.target.value)}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
                                 required={isEvent}
                             />
                         </div>
@@ -63,11 +63,11 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
 
                     {!isEvent && (
                         <div>
-                            <label className="block text-sm text-gray-400 mb-1">Category</label>
+                            <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Category</label>
                             <select
                                 value={type}
                                 onChange={e => setType(e.target.value)}
-                                className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white"
+                                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
                             >
                                 <option value="short_term">Short Term Goal</option>
                                 <option value="long_term">Long Term Goal</option>
@@ -78,22 +78,22 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
                     )}
 
                     {goal && (
-                        <div className="flex items-center gap-4 pt-2 border-t border-gray-700">
+                        <div className="flex items-center gap-4 pt-2 border-t border-gray-200 dark:border-gray-700">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={isCompleted}
                                     onChange={e => setIsCompleted(e.target.checked)}
-                                    className="rounded bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500"
+                                    className="rounded bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-green-500 focus:ring-green-500"
                                 />
-                                <span className={`text-sm ${isCompleted ? 'text-green-400 font-medium' : 'text-gray-400'}`}>
+                                <span className={`text-sm ${isCompleted ? 'text-green-500 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {isCompleted ? 'Completed' : 'Mark as Completed'}
                                 </span>
                             </label>
                         </div>
                     )}
 
-                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-700">
+                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                         {goal && onDelete && (
                             <button
                                 type="button"
@@ -107,7 +107,7 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 text-gray-300 hover:text-white transition"
+                                className="px-4 py-2 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition"
                             >
                                 Cancel
                             </button>
@@ -120,7 +120,7 @@ export default function GoalModal({ goal, onClose, onSave, onDelete }) {
                         </div>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
