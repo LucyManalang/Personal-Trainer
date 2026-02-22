@@ -1,13 +1,13 @@
 # Personal AI Trainer
 
 ## Vision
-An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlike a static plan, this trainer understands your entire week—from Ultimate Frisbee to Cardio and Recovery. By integrating **Strava** and **WHOOP**, it dynamically generates detailed workout routines for your scheduled blocks, ensuring you train smarter, not just harder.
+An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlike a static plan, this trainer understands your entire week, from workouts to recovery. By integrating **Strava** and **WHOOP**, it dynamically generates detailed workout routines for your scheduled blocks, ensuring you train smarter.
 
 ## Key Feature
 
 ### 1. Holistic Goal Tracking
-- **Short-term & Long-term Goals**: Define what you want to achieve (e.g., "Run comfortably at 5:30/km", "Chicago Marathon"). The AI considers these when planning every workout.
-- **Preferences**: Set recurring preferences like "Incorporate Yoga twice a week" or "Sleep 8 hours a night".
+- **Short-term & Long-term Goals**: Define what you want to achieve (e.g., "Run comfortably at 5:30/km", "Stay active every day"). The AI considers these when planning every workout.
+- **Preferences & Workouts**: Set recurring preferences like "I prefer running over cycling" and specified workouts for the coach to give you when prompted.
 - **Upcoming Events**: Dated goals with deadlines that the AI factors into periodization.
 - **Collapsible Sections**: Goals panel is organized into Upcoming Events, Preferences, Goals, and Schedule sections.
 
@@ -15,10 +15,10 @@ An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlik
 - **Configurable Template**: Set your default weekly activities and durations directly in the Goals panel's Schedule section.
 - **Editable Blocks**: Click any day in the Week Ahead to edit its type, duration, and notes.
 - **Auto-Fill**: Missing days are automatically populated from your saved schedule template without overwriting manual edits.
-- **Reset**: The "Initialize / Reset" button rebuilds all 7 days from your template.
+- **Reset**: The "Reset" button rebuilds all 7 days from your template.
 
 ### 3. Smart Data Integration
-- **Auto-Sync**: Strava and WHOOP data sync automatically before every plan generation — no manual sync needed.
+- **Auto-Sync**: Strava and WHOOP data sync automatically before every plan generation, no manual sync needed.
 - **Strava**: Syncs runs, rides, and activity data (distance, pace, suffer score).
 - **WHOOP**:
     - **Recovery**: Daily recovery scores, HRV, and sleep performance influence workout intensity.
@@ -30,10 +30,10 @@ An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlik
 - **Rolling Window**: Each day, yesterday's "Tomorrow" becomes "Today" (with recovery-based refinement), and a new "Tomorrow" is generated.
 - **Schedule Sync**: The plan's `block_type` is hard-overwritten with the actual schedule, guaranteeing the plan always matches the Week Ahead.
 - **Context-Aware Coaching**: The AI considers your Goals, Schedule, Recent Load, and Recovery.
-    - *Example*: If you have a "Strength" block and low recovery, it might suggest a low-intensity session instead of max effort.
+    - *Example*: If you have a "Strength" block and low recovery, it might suggest a lower-intensity session instead of max effort.
 
 ### 5. Conversational Plan Editing
-- **Pencil Button**: Each day card has a pencil icon that opens a chat modal.
+- **Pencil Button**: Each day card has an edit icon that opens a chat modal.
 - **Chat with Coach**: Ask the AI to modify your plan in natural language (e.g., "Make it 30 min shorter", "I tweaked my ankle", "Swap squats for deadlifts").
 - **Live Updates**: The plan card refreshes immediately with the coach's revisions.
 - **Persistent**: Edits are saved to the backend and survive page refreshes.
@@ -90,9 +90,9 @@ After connecting, data syncs automatically whenever you generate or refresh a pl
 | `backend/app/routers/coach.py` | AI Coach endpoints (plan generation, plan editing) |
 | `backend/app/routers/data.py` | Data endpoints (goals, schedule settings, sync) |
 | `backend/app/routers/schedule.py` | Weekly schedule initialization and auto-fill |
-| `backend/app/services/ai_coach.py` | GPT-4o integration — context building, plan generation, conversational editing |
-| `backend/app/services/strava_client.py` | Strava API client — token refresh, activity sync |
-| `backend/app/services/whoop_client.py` | WHOOP API client — token refresh, recovery/workout sync |
+| `backend/app/services/ai_coach.py` | GPT-4o integration: context building, plan generation, conversational editing |
+| `backend/app/services/strava_client.py` | Strava API client: token refresh, activity sync |
+| `backend/app/services/whoop_client.py` | WHOOP API client: token refresh, recovery/workout sync |
 | **Frontend** | |
 | `frontend/src/App.jsx` | App shell with navigation |
 | `frontend/src/pages/Dashboard.jsx` | Main dashboard layout |

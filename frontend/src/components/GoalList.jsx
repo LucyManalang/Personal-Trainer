@@ -107,14 +107,14 @@ export default function GoalList() {
 
     const handleDelete = () => {
         if (!editingGoal) return;
-        if (confirm('Are you sure you want to delete this goal?')) {
-            api.delete(`/data/goals/${editingGoal.id}`)
-                .then(() => {
-                    setGoals(prev => prev.filter(g => g.id !== editingGoal.id));
-                    setEditingGoal(null);
-                })
-                .catch(err => console.error("Failed to delete goal:", err));
-        }
+
+        api.delete(`/data/goals/${editingGoal.id}`)
+            .then(() => {
+                setGoals(prev => prev.filter(g => g.id !== editingGoal.id));
+                setEditingGoal(null);
+            })
+            .catch(err => console.error("Failed to delete goal:", err));
+
     };
 
     // Filter and Sort
@@ -187,7 +187,7 @@ export default function GoalList() {
 
                 {/* Preferences (type === 'preference') */}
                 <div className="space-y-2">
-                    <SectionHeader label="Preferences" isOpen={showPreferences} onToggle={() => setShowPreferences(!showPreferences)} />
+                    <SectionHeader label="Preferences & Workouts" isOpen={showPreferences} onToggle={() => setShowPreferences(!showPreferences)} />
                     {showPreferences && (
                         <div className="space-y-2">
                             {preferenceGoals.length === 0 && <div className="text-xs text-gray-400 dark:text-gray-600 italic">No preferences set.</div>}
