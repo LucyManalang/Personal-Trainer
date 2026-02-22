@@ -4,6 +4,7 @@ import api from '../api/client';
 
 export default function Settings() {
     const [profile, setProfile] = useState({
+        name: '',
         age: '',
         gender: '',
         heightFt: '',
@@ -67,6 +68,7 @@ export default function Settings() {
                 }
 
                 setProfile({
+                    name: user.name || '',
                     age: user.age || '',
                     gender: user.gender || '',
                     heightFt: heightFt,
@@ -141,6 +143,17 @@ export default function Settings() {
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
                 <h3 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600 dark:text-blue-400">Profile</h3>
                 <form onSubmit={handleSave} className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Name</label>
+                        <input
+                            type="text"
+                            name="name"
+                            value={profile.name}
+                            onChange={handleChange}
+                            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white"
+                            placeholder="Your name"
+                        />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Age</label>

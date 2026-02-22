@@ -333,7 +333,9 @@ def generate_single_day_plan(user, db, context, target_date):
     - Strictly adhere to the Block Type and Duration.
     - Generate a specific 'routine' and 'focus'.
     - CRITICAL: ALL values must be PLAIN STRINGS. Do NOT nest objects or arrays.
-    - The "routine" field must be a single string with numbered steps, e.g. "1. Warm up 10 min. 2. Squats 3x10. 3. Cool down."
+    - The "routine" field must be a single string with numbered steps separated by newlines.
+    - When a step references a named routine/exercise list from the user's preferences, format each exercise on its own line with a "- " prefix. For example:
+      "1. Warm up 10 min.\n2. Perform your yoga routine:\n- Half-Kneeling Ankle Stretch\n- Seiza Pose\n- 90/90 Hip Rotations\n3. Cool down 5 min."
     - Output strictly Valid JSON object:
     {{
         "date": "{date_str}",
@@ -402,7 +404,7 @@ Instructions:
 2. Modify the plan according to their request.
 3. Keep the same JSON structure for the plan.
 4. ALL plan values must be PLAIN STRINGS (no nested objects/arrays).
-5. The "routine" field must be a single string with numbered steps.
+5. The "routine" field must be a single string with numbered steps separated by newlines. When referencing a named routine/exercise list, format each exercise on its own line with a "- " prefix.
 6. Do NOT change the "date" or "block_type" fields.
 
 Output strict JSON:

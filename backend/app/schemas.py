@@ -11,6 +11,7 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     email: str
+    name: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
     height: Optional[int] = None
@@ -24,6 +25,7 @@ class UserCreate(UserBase):
     pass
 
 class UserUpdate(BaseModel):
+    name: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
     height: Optional[int] = None

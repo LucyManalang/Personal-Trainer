@@ -145,6 +145,28 @@ export default function DailyPlan() {
                                         {renderText(day.routine).split(/(?=\d+\.\s)/).map((step, i) => {
                                             const trimmed = step.trim();
                                             if (!trimmed) return null;
+
+                                            // Check if this step contains sub-list items (- item)
+                                            const parts = trimmed.split('\n');
+                                            const mainStep = parts[0];
+                                            const subItems = parts.slice(1).filter(l => l.trim().startsWith('- '));
+
+                                            if (subItems.length > 0) {
+                                                return (
+                                                    <div key={i} className="mb-2">
+                                                        <p>{mainStep}</p>
+                                                        <ul className="ml-5 mt-1 space-y-0.5">
+                                                            {subItems.map((item, j) => (
+                                                                <li key={j} className="flex items-start gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                                                                    <span className="text-gray-400 dark:text-gray-500 mt-0.5">•</span>
+                                                                    <span>{item.trim().slice(2)}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                );
+                                            }
+
                                             return (
                                                 <p key={i} className="mb-1">
                                                     {trimmed}

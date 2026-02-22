@@ -19,6 +19,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
 
     # Profile
+    name = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
     gender = Column(String, nullable=True)
     height = Column(Integer, nullable=True)  # cm

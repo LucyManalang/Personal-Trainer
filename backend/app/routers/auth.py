@@ -46,6 +46,7 @@ def update_user_settings(
     db: Session = Depends(get_db)
 ):
     """Update user profile settings (age, gender, height, weight, AI model, etc.)."""
+    if settings.name is not None: current_user.name = settings.name
     if settings.age is not None: current_user.age = settings.age
     if settings.gender is not None: current_user.gender = settings.gender
     if settings.height is not None: current_user.height = settings.height

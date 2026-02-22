@@ -197,7 +197,28 @@ export default function GoalList() {
                                     onClick={() => setEditingGoal(goal)}
                                     className="bg-gray-50 dark:bg-gray-700/30 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <div className="text-sm text-gray-700 dark:text-gray-300">{goal.description}</div>
+                                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                                        {(() => {
+                                            const lines = goal.description.split('\n').filter(l => l.trim());
+                                            const isRoutine = lines.length >= 2 && lines[0].trim().endsWith(':') && lines.slice(1).every(l => l.trim().startsWith('- '));
+                                            if (isRoutine) {
+                                                return (
+                                                    <div>
+                                                        <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">{lines[0].trim().slice(0, -1)}</div>
+                                                        <ul className="space-y-0.5 ml-1">
+                                                            {lines.slice(1).map((l, i) => (
+                                                                <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                                                    <span className="text-gray-400 dark:text-gray-500 mt-0.5">•</span>
+                                                                    {l.trim().slice(2)}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                );
+                                            }
+                                            return goal.description;
+                                        })()}
+                                    </div>
                                 </div>
                             ))}
                         </div>

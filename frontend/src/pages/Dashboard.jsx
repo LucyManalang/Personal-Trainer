@@ -1,12 +1,22 @@
+import { useState, useEffect } from 'react'
 import GoalList from '../components/GoalList'
 import WeeklySchedule from '../components/WeeklySchedule'
 import DailyPlan from '../components/DailyPlan'
+import api from '../api/client'
 
 export default function Dashboard() {
+    const [name, setName] = useState('');
+
+    useEffect(() => {
+        api.get('/auth/user')
+            .then(res => setName(res.data.name || ''))
+            .catch(() => { });
+    }, []);
+
     return (
         <div className="space-y-4 sm:space-y-6">
             <header className="mb-2 sm:mb-4">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-1">Hello, Lucy</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-1">Hello{name ? `, ${name}` : ''}</h2>
                 <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Ready to crush your goals today?</p>
             </header>
 
