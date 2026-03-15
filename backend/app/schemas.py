@@ -168,3 +168,22 @@ class WhoopWorkout(WhoopWorkoutBase):
     user_id: int
     class Config:
         from_attributes = True
+
+
+# --- Readiness Check-In ---
+
+class ReadinessCheckInBase(BaseModel):
+    energy_level: int  # 1-10
+    soreness_notes: Optional[str] = None
+    mood: Optional[str] = None  # "great", "good", "okay", "low", "bad"
+
+class ReadinessCheckInCreate(ReadinessCheckInBase):
+    pass
+
+class ReadinessCheckIn(ReadinessCheckInBase):
+    id: int
+    user_id: int
+    date: str
+    created_at: datetime
+    class Config:
+        from_attributes = True

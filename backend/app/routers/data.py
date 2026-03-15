@@ -6,10 +6,11 @@ Also provides sync endpoints for Strava activities and WHOOP recoveries.
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 from ..database import get_db
-from ..models import User, Goal
+from ..models import User, Goal, ReadinessCheckIn
 from ..services import strava_client, whoop_client
-from ..schemas import GoalCreate, GoalUpdate, Goal as GoalSchema
+from ..schemas import GoalCreate, GoalUpdate, Goal as GoalSchema, ReadinessCheckInCreate, ReadinessCheckIn as ReadinessSchema
 
 router = APIRouter()
 
@@ -130,3 +131,66 @@ def sync_whoop(db: Session = Depends(get_db)):
         return {"message": f"Synced {len(recoveries)} new recoveries", "count": len(recoveries)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Readiness Check-In ---
+
+@router.post("/readiness", response_model=ReadinessSchema)
+def create_readiness_checkin(checkin: ReadinessCheckInCreate, db: Session = Depends(get_db)):
+    """Save today's readiness check-in (energy, soreness, mood)."""
+    user = db.query(User).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    # Upsert — replace any existing check-in for today
+    existing = db.query(ReadinessCheckIn).filter(
+        ReadinessCheckIn.user_id == user.id,
+        ReadinessCheckIn.date == today_str
+    ).first()
+
+    if existing:
+        existing.energy_level = checkin.energy_level
+        existing.soreness_notes = checkin.soreness_notes
+        existing.mood = checkin.mood
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    db_checkin = ReadinessCheckIn(
+        user_id=user.id,
+        date=today_str,
+        energy_level=checkin.energy_level,
+        soreness_notes=checkin.soreness_notes,
+        mood=checkin.mood
+    )
+    db.add(db_checkin)
+    db.commit()
+    db.refresh(db_checkin)
+    return db_checkin
+
+
+@router.get("/readiness/today")
+def get_today_readiness(db: Session = Depends(get_db)):
+    """Get today's readiness check-in (if any)."""
+    user = db.query(User).first()
+    if not user:
+        return {"checkin": None}
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    checkin = db.query(ReadinessCheckIn).filter(
+        ReadinessCheckIn.user_id == user.id,
+        ReadinessCheckIn.date == today_str
+    ).first()
+
+    if checkin:
+        return {
+            "checkin": {
+                "energy_level": checkin.energy_level,
+                "soreness_notes": checkin.soreness_notes,
+                "mood": checkin.mood,
+                "date": checkin.date
+            }
+        }
+    return {"checkin": None}

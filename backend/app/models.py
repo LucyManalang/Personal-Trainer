@@ -39,6 +39,7 @@ class User(Base):
     plan_today = Column(JSON, nullable=True)
     plan_tomorrow = Column(JSON, nullable=True)
     last_plan_date = Column(String, nullable=True)
+    coach_analysis = Column(JSON, nullable=True)
 
     # Relationships
     activities = relationship("StravaActivity", back_populates="user")
@@ -47,6 +48,7 @@ class User(Base):
     goals = relationship("Goal", back_populates="user")
     workout_blocks = relationship("WorkoutBlock", back_populates="user")
     whoop_workouts = relationship("WhoopWorkout", back_populates="user")
+    readiness_checkins = relationship("ReadinessCheckIn", back_populates="user")
 
 
 class Goal(Base):
@@ -147,3 +149,18 @@ class WhoopWorkout(Base):
     zone_durations = Column(JSON, nullable=True)
 
     user = relationship("User", back_populates="whoop_workouts")
+
+
+class ReadinessCheckIn(Base):
+    """Daily subjective readiness check-in (energy, soreness, mood)."""
+    __tablename__ = "readiness_checkins"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(String)  # YYYY-MM-DD
+    energy_level = Column(Integer)  # 1-10
+    soreness_notes = Column(Text, nullable=True)
+    mood = Column(String, nullable=True)  # "great", "good", "okay", "low", "bad"
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="readiness_checkins")

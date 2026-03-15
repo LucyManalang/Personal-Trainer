@@ -90,7 +90,7 @@ After connecting, data syncs automatically whenever you generate or refresh a pl
 | `backend/app/routers/coach.py` | AI Coach endpoints (plan generation, plan editing) |
 | `backend/app/routers/data.py` | Data endpoints (goals, schedule settings, sync) |
 | `backend/app/routers/schedule.py` | Weekly schedule initialization and auto-fill |
-| `backend/app/services/ai_coach.py` | GPT-4o integration: context building, plan generation, conversational editing |
+| `backend/app/services/ai_coach.py` | OpenAI integration: context building, plan generation, conversational editing |
 | `backend/app/services/strava_client.py` | Strava API client: token refresh, activity sync |
 | `backend/app/services/whoop_client.py` | WHOOP API client: token refresh, recovery/workout sync |
 | **Frontend** | |

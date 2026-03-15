@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import PlanEditChat from './PlanEditChat';
+import ReadinessCheckIn from './ReadinessCheckIn';
 
 export default function DailyPlan() {
     const [plan, setPlan] = useState(null);
@@ -8,10 +9,32 @@ export default function DailyPlan() {
     const [error, setError] = useState(null);
     const [syncInfo, setSyncInfo] = useState(null);
     const [editingDay, setEditingDay] = useState(null); // { idx: 0|1, label: "today"|"tomorrow" }
+    const [coachAnalysis, setCoachAnalysis] = useState(null);
+    const [analysisExpanded, setAnalysisExpanded] = useState(false);
+    const [showCheckin, setShowCheckin] = useState(null); // null = loading, true/false
 
     useEffect(() => {
-        handleGenerate();
+        checkReadinessAndLoad();
     }, []);
+
+    const checkReadinessAndLoad = async () => {
+        try {
+            const res = await api.get('/data/readiness/today');
+            if (res.data.checkin) {
+                // Already checked in today — go straight to plan
+                setShowCheckin(false);
+                handleGenerate();
+            } else {
+                // No check-in — show the prompt
+                setShowCheckin(true);
+                setLoading(false);
+            }
+        } catch (err) {
+            // If readiness endpoint fails, just load the plan
+            setShowCheckin(false);
+            handleGenerate();
+        }
+    };
 
     const handleGenerate = () => {
         setLoading(true);
@@ -20,6 +43,7 @@ export default function DailyPlan() {
         api.post('/coach/plan-3-day')
             .then(res => {
                 if (res.data.sync) setSyncInfo(res.data.sync);
+                if (res.data.coach_analysis) setCoachAnalysis(res.data.coach_analysis);
                 if (res.data.plan && Array.isArray(res.data.plan)) {
                     setPlan(res.data.plan);
                 } else if (res.data.message) {
@@ -33,6 +57,16 @@ export default function DailyPlan() {
                 setError("Failed to generate plan. Please try again.");
             })
             .finally(() => setLoading(false));
+    };
+
+    const handleCheckinComplete = () => {
+        setShowCheckin(false);
+        handleGenerate();
+    };
+
+    const handleCheckinSkip = () => {
+        setShowCheckin(false);
+        handleGenerate();
     };
 
     const renderSyncStatus = () => {
@@ -64,6 +98,108 @@ export default function DailyPlan() {
         );
     };
 
+    const renderCoachAnalysis = () => {
+        if (!coachAnalysis || coachAnalysis.error) return null;
+
+        return (
+            <div className="mb-4">
+                <button
+                    onClick={() => setAnalysisExpanded(!analysisExpanded)}
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition group w-full"
+                >
+                    <span className="text-lg">🧠</span>
+                    <span className="font-medium">Coach's Analysis</span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-4 w-4 transition-transform duration-200 ${analysisExpanded ? 'rotate-180' : ''}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                {analysisExpanded && (
+                    <div className="mt-3 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-gray-700/40 dark:to-gray-700/20 rounded-lg p-4 border border-blue-100 dark:border-blue-900/30 space-y-3 text-sm">
+                        {coachAnalysis.recovery_status && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">❤️‍🩹</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Recovery: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.recovery_status}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.training_load_status && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">📊</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Training Load: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.training_load_status}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.sleep_status && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">😴</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Sleep: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.sleep_status}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.hr_zone_status && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">💓</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">HR Zones: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.hr_zone_status}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.readiness_status && coachAnalysis.readiness_status !== 'No check-in submitted' && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">🧠</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Readiness: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.readiness_status}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.goal_proximity && (
+                            <div className="flex gap-2">
+                                <span className="text-lg flex-shrink-0">🎯</span>
+                                <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Goals: </span>
+                                    <span className="text-gray-600 dark:text-gray-400">{coachAnalysis.goal_proximity}</span>
+                                </div>
+                            </div>
+                        )}
+                        {coachAnalysis.overall_notes && (
+                            <div className="mt-2 pt-2 border-t border-blue-100 dark:border-blue-900/30 flex gap-2">
+                                <span className="text-lg flex-shrink-0">💡</span>
+                                <span className="text-gray-600 dark:text-gray-400 italic">{coachAnalysis.overall_notes}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Show readiness check-in if needed
+    if (showCheckin === true) {
+        return (
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 shadow-lg h-full min-h-[400px] transition-colors duration-200">
+                <ReadinessCheckIn
+                    onComplete={handleCheckinComplete}
+                    onSkip={handleCheckinSkip}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 shadow-lg h-full min-h-[400px] transition-colors duration-200">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
@@ -82,7 +218,7 @@ export default function DailyPlan() {
                 </div>
             </div>
 
-
+            {renderCoachAnalysis()}
 
             {error && <div className="text-red-400 text-sm mb-4">{error}</div>}
 
