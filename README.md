@@ -1,7 +1,7 @@
 # Personal AI Trainer
 
 ## Vision
-An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlike a static plan, this trainer understands your entire week, from workouts to recovery. By integrating **Strava** and **WHOOP**, it dynamically generates detailed workout routines for your scheduled blocks, ensuring you train smarter.
+An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlike a static plan, this trainer understands your entire week, from workouts to recovery. By integrating **Strava** and **WHOOP**, it dynamically generates detailed workout routines using a **self-prompting AI chain** — the AI first analyzes your data like a real coach, then uses its own analysis to write your plan.
 
 ## Key Feature
 
@@ -32,11 +32,29 @@ An intelligent, holistic **AI Personal Trainer** that adapts to your life. Unlik
 - **Context-Aware Coaching**: The AI considers your Goals, Schedule, Recent Load, and Recovery.
     - *Example*: If you have a "Strength" block and low recovery, it might suggest a lower-intensity session instead of max effort.
 
-### 5. Conversational Plan Editing
+### 5. Readiness Check-In
+- **Energy Level**: Slider (1–10) to rate how you feel.
+- **Mood**: Emoji selection from rough to great.
+- **Soreness Notes**: Free-text input for specific aches.
+- **Prompted Before Plan Generation**: Feeds into the coaching analysis alongside objective WHOOP data.
+- Subjective + objective data = smarter coaching decisions.
+
+### 6. Conversational Plan Editing
 - **Pencil Button**: Each day card has an edit icon that opens a chat modal.
 - **Chat with Coach**: Ask the AI to modify your plan in natural language (e.g., "Make it 30 min shorter", "I tweaked my ankle", "Swap squats for deadlifts").
 - **Live Updates**: The plan card refreshes immediately with the coach's revisions.
 - **Persistent**: Edits are saved to the backend and survive page refreshes.
+
+## Architecture: Self-Prompting AI Chain
+
+The AI coach uses a **two-step LLM chain** to generate plans:
+
+1. **Raw Data** — Strava activities, WHOOP recovery, goals, schedule, readiness check-in
+2. **Recovery Insights** — `compute_recovery_insights()` runs pure math (trends, sleep debt, strain ratios, HR zones) — no LLM
+3. **Coaching Analysis** — LLM Step 1: the AI reasons about all data like a real coach
+4. **Day Plan** — LLM Step 2: the AI uses *its own analysis* to write a detailed workout plan
+
+The key innovation is that **the AI prompts itself** — the coaching analysis from Step 3 becomes the input for Step 4, producing more thoughtful and coherent plans.
 
 ## Getting Started
 
@@ -90,7 +108,7 @@ After connecting, data syncs automatically whenever you generate or refresh a pl
 | `backend/app/routers/coach.py` | AI Coach endpoints (plan generation, plan editing) |
 | `backend/app/routers/data.py` | Data endpoints (goals, schedule settings, sync) |
 | `backend/app/routers/schedule.py` | Weekly schedule initialization and auto-fill |
-| `backend/app/services/ai_coach.py` | OpenAI integration: context building, plan generation, conversational editing |
+| `backend/app/services/ai_coach.py` | OpenAI integration: self-prompting chain, recovery insights, plan generation, conversational editing |
 | `backend/app/services/strava_client.py` | Strava API client: token refresh, activity sync |
 | `backend/app/services/whoop_client.py` | WHOOP API client: token refresh, recovery/workout sync |
 | **Frontend** | |
@@ -99,6 +117,7 @@ After connecting, data syncs automatically whenever you generate or refresh a pl
 | `frontend/src/pages/SettingsPage.jsx` | User profile and integration settings |
 | `frontend/src/components/DailyPlan.jsx` | AI Coach plan display with sync status and edit buttons |
 | `frontend/src/components/PlanEditChat.jsx` | Chat modal for conversational plan editing |
+| `frontend/src/components/ReadinessCheckIn.jsx` | Pre-plan readiness survey (energy, mood, soreness) |
 | `frontend/src/components/WeeklySchedule.jsx` | Week Ahead grid with editable blocks |
 | `frontend/src/components/EditBlockModal.jsx` | Modal for editing individual workout blocks |
 | `frontend/src/components/GoalList.jsx` | Goals panel with collapsible sections and schedule input |
